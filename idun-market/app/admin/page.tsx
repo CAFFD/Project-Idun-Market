@@ -101,9 +101,12 @@ export default function AdminPage() {
                                 </div>
                                 <div className="flex gap-2">
                                     {/* TODO: Implementar edição */}
-                                    <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                                    <Link 
+                                        href={`/admin/products/${product.id}`}
+                                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                                    >
                                         <Edit size={20} />
-                                    </button>
+                                    </Link>
                                     <button 
                                         onClick={() => handleDelete(product.id)}
                                         className="p-2 text-gray-400 hover:text-red-600 transition-colors"
