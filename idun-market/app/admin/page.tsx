@@ -83,40 +83,91 @@ export default function AdminPage() {
                         <p className="text-sm">Clique no + para adicionar.</p>
                     </div>
                 ) : (
-                    <div className="grid gap-4">
-                        {products.map((product) => (
-                            <div key={product.id} className="bg-white rounded-lg p-4 shadow-sm flex items-center gap-4 border border-gray-100">
-                                <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                                    {product.image_url ? (
-                                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Sem foto</div>
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-medium text-gray-800 truncate">{product.name}</h3>
-                                    <p className="text-sm text-emerald-600 font-semibold">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
-                                    </p>
-                                </div>
-                                <div className="flex gap-2">
-                                    {/* TODO: Implementar edição */}
-                                    <Link 
-                                        href={`/admin/products/${product.id}`}
-                                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                                    >
-                                        <Edit size={20} />
-                                    </Link>
-                                    <button 
-                                        onClick={() => handleDelete(product.id)}
-                                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                                    >
-                                        <Trash2 size={20} />
-                                    </button>
-                                </div>
+                <>
+                {/* Mobile View: Cards */}
+                <div className="block md:hidden space-y-4">
+                    {products.map((product) => (
+                        <div key={product.id} className="bg-white rounded-lg p-4 shadow-sm flex items-center gap-4 border border-gray-100">
+                            <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
+                                {product.image_url ? (
+                                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Sem foto</div>
+                                )}
                             </div>
-                        ))}
-                    </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-medium text-gray-800 truncate">{product.name}</h3>
+                                <p className="text-sm text-emerald-600 font-semibold">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                                </p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Link 
+                                    href={`/admin/products/${product.id}`}
+                                    className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                                >
+                                    <Edit size={20} />
+                                </Link>
+                                <button 
+                                    onClick={() => handleDelete(product.id)}
+                                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Desktop View: Table */}
+                <div className="hidden md:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th className="p-4 font-semibold text-gray-600 w-24">Imagem</th>
+                                <th className="p-4 font-semibold text-gray-600">Produto</th>
+                                <th className="p-4 font-semibold text-gray-600 w-32">Preço</th>
+                                <th className="p-4 font-semibold text-gray-600 w-24 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {products.map((product) => (
+                                <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="p-4">
+                                        <div className="w-12 h-12 bg-gray-100 rounded-md overflow-hidden">
+                                            {product.image_url ? (
+                                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">--</div>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="p-4 font-medium text-gray-900">{product.name}</td>
+                                    <td className="p-4 text-emerald-600 font-medium">
+                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(product.price)}
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Link 
+                                                href={`/admin/products/${product.id}`}
+                                                className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                                            >
+                                                <Edit size={18} />
+                                            </Link>
+                                            <button 
+                                                onClick={() => handleDelete(product.id)}
+                                                className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                </>
                 )}
             </main>
 

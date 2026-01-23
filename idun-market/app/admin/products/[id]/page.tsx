@@ -232,12 +232,12 @@ export default function EditProductPage() {
                     {/* Inputs */}
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Produto</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Produto</label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow placeholder:text-slate-500"
                                 placeholder="Nome do produto"
                                 required
                             />
@@ -245,23 +245,23 @@ export default function EditProductPage() {
 
                         <div className="flex gap-4">
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Preço (R$)</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Preço (R$)</label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     value={price}
                                     onChange={(e) => setPrice(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow placeholder:text-slate-500"
                                     placeholder="0,00"
                                     required
                                 />
                             </div>
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
                                 <select
                                     value={categoryId}
                                     onChange={(e) => setCategoryId(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white transition-shadow"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white transition-shadow placeholder:text-slate-500"
                                 >
                                     <option value="">Selecione...</option>
                                     {categories.map((cat) => (
@@ -272,11 +272,11 @@ export default function EditProductPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Descrição</label>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow placeholder:text-slate-500"
                                 rows={3}
                                 placeholder="Descrição detalhada (opcional)"
                             />

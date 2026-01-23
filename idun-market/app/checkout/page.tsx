@@ -141,7 +141,7 @@ Endereço: ${address}`
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Ex: João da Silva"
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                className="w-full max-w-full box-border rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
                             />
                         </div>
                         <div>
@@ -151,7 +151,7 @@ Endereço: ${address}`
                                 onChange={(e) => setAddress(e.target.value)}
                                 placeholder="Rua, Número, Bairro, Complemento..."
                                 rows={2}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                                className="w-full max-w-full box-border rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
                             />
                         </div>
                         <div>
@@ -159,7 +159,7 @@ Endereço: ${address}`
                             <select
                                 value={paymentMethod}
                                 onChange={(e) => setPaymentMethod(e.target.value)}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white"
+                                className="w-full max-w-full box-border rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
                             >
                                 <option value="Pix">Pix</option>
                                 <option value="Cartão de Crédito/Débito">Cartão de Crédito/Débito</option>

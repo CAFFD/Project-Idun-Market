@@ -152,12 +152,12 @@ export default function NewProductPage() {
                     {/* Fields */}
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Produto</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Produto</label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none placeholder:text-slate-500"
                                 placeholder="Ex: Coca-Cola 2L"
                                 required
                             />
@@ -165,23 +165,23 @@ export default function NewProductPage() {
 
                         <div className="flex gap-4">
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Preço (R$)</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Preço (R$)</label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     value={price}
                                     onChange={(e) => setPrice(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none placeholder:text-slate-500"
                                     placeholder="0,00"
                                     required
                                 />
                             </div>
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
                                 <select
                                     value={categoryId}
                                     onChange={(e) => setCategoryId(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white placeholder:text-slate-500"
                                 >
                                     <option value="">Selecione...</option>
                                     {categories.map((cat) => (
@@ -192,11 +192,11 @@ export default function NewProductPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Descrição (Opcional)</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Descrição (Opcional)</label>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none placeholder:text-slate-500"
                                 rows={3}
                                 placeholder="Detalhes do produto..."
                             />
