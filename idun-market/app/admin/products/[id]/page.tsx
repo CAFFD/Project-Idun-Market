@@ -217,7 +217,7 @@ export default function EditProductPage() {
                             ) : (
                                 <>
                                     <Camera className="text-gray-400 mb-2 group-hover:text-emerald-500 transition-colors" size={32} />
-                                    <span className="text-sm text-gray-500 group-hover:text-emerald-600 transition-colors">Toque para adicionar foto</span>
+                                    <span className="text-sm text-gray-500 group-hover:text-emerald-600 transition-colors">Toque para escolher ou tirar foto</span>
                                 </>
                             )}
                             <input 
@@ -237,7 +237,7 @@ export default function EditProductPage() {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow placeholder:text-slate-500"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
                                 placeholder="Nome do produto"
                                 required
                             />
@@ -251,7 +251,7 @@ export default function EditProductPage() {
                                     step="0.01"
                                     value={price}
                                     onChange={(e) => setPrice(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow placeholder:text-slate-500"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
                                     placeholder="0,00"
                                     required
                                 />
@@ -261,7 +261,7 @@ export default function EditProductPage() {
                                 <select
                                     value={categoryId}
                                     onChange={(e) => setCategoryId(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white transition-shadow placeholder:text-slate-500"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
                                 >
                                     <option value="">Selecione...</option>
                                     {categories.map((cat) => (
@@ -276,7 +276,7 @@ export default function EditProductPage() {
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-shadow placeholder:text-slate-500"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
                                 rows={3}
                                 placeholder="Descrição detalhada (opcional)"
                             />

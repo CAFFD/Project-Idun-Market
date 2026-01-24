@@ -137,7 +137,7 @@ export default function NewProductPage() {
                             ) : (
                                 <>
                                     <Camera className="text-gray-400 mb-2" size={32} />
-                                    <span className="text-sm text-gray-500">Toque para adicionar foto</span>
+                                    <span className="text-sm text-gray-500">Toque para escolher ou tirar foto</span>
                                 </>
                             )}
                             <input 
@@ -157,7 +157,7 @@ export default function NewProductPage() {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none placeholder:text-slate-500"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
                                 placeholder="Ex: Coca-Cola 2L"
                                 required
                             />
@@ -171,7 +171,7 @@ export default function NewProductPage() {
                                     step="0.01"
                                     value={price}
                                     onChange={(e) => setPrice(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none placeholder:text-slate-500"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
                                     placeholder="0,00"
                                     required
                                 />
@@ -181,7 +181,7 @@ export default function NewProductPage() {
                                 <select
                                     value={categoryId}
                                     onChange={(e) => setCategoryId(e.target.value)}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white placeholder:text-slate-500"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
                                 >
                                     <option value="">Selecione...</option>
                                     {categories.map((cat) => (
@@ -196,7 +196,7 @@ export default function NewProductPage() {
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none placeholder:text-slate-500"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 outline-none"
                                 rows={3}
                                 placeholder="Detalhes do produto..."
                             />

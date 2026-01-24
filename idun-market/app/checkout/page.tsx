@@ -3,13 +3,15 @@
 import React, { useState, useEffect } from 'react'
 import { useCart } from '@/store/useCart'
 import Link from 'next/link'
-import { ArrowLeft, Trash, Plus, Minus, Send } from 'lucide-react'
+import { ArrowLeft, Trash, Plus, Minus, Send, Loader2 } from 'lucide-react'
+import { createOrder } from '@/lib/orderService'
 import { useRouter } from 'next/navigation'
 
 export default function CheckoutPage() {
     const { items, addItem, decreaseItem, removeItem, totalPrice } = useCart()
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
+    const [loading, setLoading] = useState(false)
 
     // Form State
     const [name, setName] = useState('')
@@ -25,35 +27,68 @@ export default function CheckoutPage() {
 
     const total = totalPrice()
 
-    const handleFinish = () => {
+    const handleFinish = async () => {
         if (!name || !address) {
             alert('Por favor, preencha nome e endereço.')
             return
         }
 
-        const itemsList = items
-            .map((item) => `- ${item.quantity}x ${item.name} (R$ ${(item.price * item.quantity).toFixed(2)})`)
-            .join('\n')
+        setLoading(true)
 
-        const totalFormatted = new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-        }).format(total)
+        try {
+            // 1. Salvar Pedido no Banco
+            // Tentamos pegar o store_id do primeiro item do carrinho (assumindo pedido de loja única)
+            const firstItemStoreId = items[0]?.store_id || null
 
-        const message = `Olá! Me chamo *${name}*.
-Gostaria de pedir:
+            const { orderId, error } = await createOrder({
+                customer_name: name,
+                customer_address: address,
+                payment_method: paymentMethod,
+                total_amount: total,
+                store_id: firstItemStoreId
+            }, items)
 
+            if (error) {
+                alert('Erro ao salvar pedido: ' + error)
+                setLoading(false)
+                return
+            }
+
+            // 2. Gerar Mensagem WhatsApp
+            const itemsList = items
+                .map((item) => `- ${item.quantity}x ${item.name} (R$ ${(item.price * item.quantity).toFixed(2)})`)
+                .join('\n')
+
+            const totalFormatted = new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+            }).format(total)
+
+            const message = `*NOVO PEDIDO #${orderId?.slice(0, 8).toUpperCase()}*
+            
+Cliente: *${name}*
+Endereço: ${address}
+Pagamento: ${paymentMethod}
+
+*Itens:*
 ${itemsList}
 
-*Total: ${totalFormatted}*
-Pagamento: ${paymentMethod}
-Endereço: ${address}`
+*Total: ${totalFormatted}*`
 
-        const encodedMessage = encodeURIComponent(message)
-        const whatsappNumber = '5511999999999' // TODO: Pegar do banco de dados ou variável de ambiente
-        const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`
+            const encodedMessage = encodeURIComponent(message)
+            const whatsappNumber = '5511999999999' // TODO: Pegar do banco de dados ou variável de ambiente
+            const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`
 
-        window.open(url, '_blank')
+            // 3. Limpar Carrinho e Redirecionar
+            items.forEach(item => removeItem(item.id)) // Limpa items um por um ou implementar clearCart no store
+            window.open(url, '_blank')
+            router.push('/') // Volta para home
+
+        } catch (err) {
+            console.error(err)
+            alert('Erro inesperado ao processar pedido.')
+            setLoading(false)
+        }
     }
 
     if (items.length === 0) {
@@ -141,7 +176,7 @@ Endereço: ${address}`
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Ex: João da Silva"
-                                className="w-full max-w-full box-border rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                             />
                         </div>
                         <div>
@@ -151,7 +186,7 @@ Endereço: ${address}`
                                 onChange={(e) => setAddress(e.target.value)}
                                 placeholder="Rua, Número, Bairro, Complemento..."
                                 rows={2}
-                                className="w-full max-w-full box-border rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                             />
                         </div>
                         <div>
@@ -159,7 +194,7 @@ Endereço: ${address}`
                             <select
                                 value={paymentMethod}
                                 onChange={(e) => setPaymentMethod(e.target.value)}
-                                className="w-full max-w-full box-border rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                             >
                                 <option value="Pix">Pix</option>
                                 <option value="Cartão de Crédito/Débito">Cartão de Crédito/Débito</option>
@@ -180,10 +215,20 @@ Endereço: ${address}`
 
                     <button
                         onClick={handleFinish}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md"
+                        disabled={loading}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
                     >
-                        <Send size={20} />
-                        Enviar Pedido no WhatsApp
+                        {loading ? (
+                            <>
+                                <Loader2 className="animate-spin" size={20} />
+                                Enviando Pedido...
+                            </>
+                        ) : (
+                            <>
+                                <Send size={20} />
+                                Enviar Pedido no WhatsApp
+                            </>
+                        )}
                     </button>
                     <p className="text-xs text-center text-gray-400 mt-2">
                         Ao clicar, você será redirecionado para o WhatsApp da loja para combinar a entrega.
