@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { LogOut, Plus, Package, Trash2, Edit } from 'lucide-react'
+import { getStoreStatus } from '@/lib/storeService'
+import { StoreStatusToggle } from '@/components/admin/StoreStatusToggle'
 import Link from 'next/link'
 import { Product } from '@/store/useCart'
 
 export default function AdminPage() {
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
+    const [storeStatus, setStoreStatus] = useState<{ isOpen: boolean, storeId: string } | null>(null)
     const router = useRouter()
 
     useEffect(() => {
@@ -27,6 +30,10 @@ export default function AdminPage() {
 
     const fetchProducts = async () => {
         try {
+            // Fetch Store Status
+            const status = await getStoreStatus()
+            if (status.storeId) setStoreStatus({ isOpen: status.isOpen, storeId: status.storeId })
+
             const { data, error } = await supabase
                 .from('products')
                 .select('*')
@@ -66,7 +73,12 @@ export default function AdminPage() {
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* Header */}
             <header className="bg-white border-b border-gray-200 p-4 sticky top-0 z-10 flex justify-between items-center shadow-sm">
-                <h1 className="font-bold text-gray-800 text-lg">Meus Produtos</h1>
+                <div className="flex items-center gap-4">
+                    <h1 className="font-bold text-gray-800 text-lg">Dashboard</h1>
+                    {storeStatus && (
+                        <StoreStatusToggle initialStatus={storeStatus.isOpen} storeId={storeStatus.storeId} />
+                    )}
+                </div>
                 <button 
                     onClick={handleSignOut}
                     className="text-gray-500 hover:text-red-600 transition-colors p-2"

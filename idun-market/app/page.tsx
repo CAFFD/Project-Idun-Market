@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { ProductCard } from '@/components/ProductCard'
+import { getStoreStatus } from '@/lib/storeService'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
@@ -21,9 +22,17 @@ export const revalidate = 0 // Disable cache for real-time-ish feel
 export default async function Home() {
     const products = await getProducts()
     const categories = await getCategories()
+    const { isOpen: isStoreOpen } = await getStoreStatus()
 
     return (
         <main className="min-h-screen bg-gray-50 pb-24">
+            {/* Store Closed Banner */}
+            {!isStoreOpen && (
+                <div className="bg-red-500 text-white text-center py-3 px-4 font-bold sticky top-[73px] z-20 shadow-md">
+                    🚫 LOJA FECHADA NO MOMENTO. Voltamos em breve!
+                </div>
+            )}
+
             {/* Header */}
             <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
                 <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -61,7 +70,7 @@ export default async function Home() {
                     ) : (
                         <div className="grid grid-cols-2 gap-2 md:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                             {products.map((product) => (
-                                <ProductCard key={product.id} product={product} />
+                                <ProductCard key={product.id} product={product} isStoreOpen={isStoreOpen} />
                             ))}
                         </div>
                     )}

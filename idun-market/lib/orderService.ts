@@ -3,6 +3,7 @@ import { Product } from '@/store/useCart'
 
 interface OrderData {
     customer_name: string
+    customer_phone: string
     customer_address: string
     payment_method: string
     total_amount: number
@@ -23,6 +24,7 @@ export async function createOrder(orderData: OrderData, items: { id: string, nam
             .from('orders')
             .insert({
                 customer_name: orderData.customer_name,
+                customer_phone: orderData.customer_phone,
                 customer_address: orderData.customer_address,
                 payment_method: orderData.payment_method,
                 total_amount: orderData.total_amount,

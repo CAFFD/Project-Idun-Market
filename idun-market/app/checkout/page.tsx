@@ -15,6 +15,7 @@ export default function CheckoutPage() {
 
     // Form State
     const [name, setName] = useState('')
+    const [phone, setPhone] = useState('')
     const [address, setAddress] = useState('')
     const [paymentMethod, setPaymentMethod] = useState('Pix')
 
@@ -28,8 +29,8 @@ export default function CheckoutPage() {
     const total = totalPrice()
 
     const handleFinish = async () => {
-        if (!name || !address) {
-            alert('Por favor, preencha nome e endereço.')
+        if (!name || !address || !phone) {
+            alert('Por favor, preencha nome, telefone e endereço.')
             return
         }
 
@@ -42,6 +43,7 @@ export default function CheckoutPage() {
 
             const { orderId, whatsappNumber, error } = await createOrder({
                 customer_name: name,
+                customer_phone: phone,
                 customer_address: address,
                 payment_method: paymentMethod,
                 total_amount: total,
@@ -67,8 +69,10 @@ export default function CheckoutPage() {
             const message = `*NOVO PEDIDO #${orderId?.slice(0, 8).toUpperCase()}*
             
 Cliente: *${name}*
+Contato: ${phone}
 Endereço: ${address}
 Pagamento: ${paymentMethod}
+
 
 *Itens:*
 ${itemsList}
@@ -177,6 +181,16 @@ ${itemsList}
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Ex: João da Silva"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp</label>
+                            <input
+                                type="tel"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                placeholder="Ex: 11999999999"
                                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-500 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                             />
                         </div>

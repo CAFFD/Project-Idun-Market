@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { getOrders, updateOrderStatus } from '@/lib/orderService'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ArrowLeft, Loader2, Package } from 'lucide-react'
+import { ArrowLeft, Loader2, Package, Phone } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner' // Import Toast
 
@@ -14,6 +14,7 @@ interface Order {
     id: string
     created_at: string
     customer_name: string
+    customer_phone: string
     total_amount: number
     status: string
 }
@@ -126,20 +127,40 @@ export default function AdminOrdersPage() {
                                         </div>
                                     </div>
                                     
-                                    <div className="flex justify-between items-center pt-2 border-t border-gray-50">
+                                    <div className="flex justify-between items-center pt-2 border-t border-gray-50 mt-2">
                                          {/* Status Select */}
-                                        <select 
-                                            value={order.status}
-                                            onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                            className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 outline-none"
-                                        >
-                                            {STATUS_OPTIONS.map(opt => (
-                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                            ))}
-                                        </select>
-                                        
-                                        {/* Visual Badge (Optional duplicate, good for quick scan) */}
-                                        {/* {getStatusBadge(order.status)} */}
+                                        <div className="flex items-center gap-2">
+                                            <select 
+                                                value={order.status}
+                                                onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                                className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 outline-none"
+                                            >
+                                                {STATUS_OPTIONS.map(opt => (
+                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                ))}
+                                            </select>
+                                            
+                                            {/* WhatsApp Notification Button */}
+                                            {order.customer_phone && (
+                                                <button
+                                                    onClick={() => {
+                                                        const msgMap: Record<string, string> = {
+                                                            'pending': `Olá ${order.customer_name}, recebemos seu pedido #${order.id.slice(0, 8)}!`,
+                                                            'preparing': `Seu pedido #${order.id.slice(0, 8)} está sendo preparado! 🍳`,
+                                                            'sent': `Saiu para entrega! 🛵 Pedido #${order.id.slice(0, 8)}.`,
+                                                            'delivered': `Pedido entregue. Obrigado! ⭐`,
+                                                            'problem': `Olá ${order.customer_name}, houve um imprevisto com o pedido #${order.id.slice(0, 8)}. Podemos conversar?`
+                                                        }
+                                                        const msg = msgMap[order.status] || `Olá ${order.customer_name}!`
+                                                        window.open(`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+                                                    }}
+                                                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
+                                                    title="Notificar Cliente"
+                                                >
+                                                    <Phone size={20} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -171,15 +192,37 @@ export default function AdminOrdersPage() {
                                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
                                             </td>
                                             <td className="p-4">
-                                                <select 
-                                                    value={order.status}
-                                                    onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                                    className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2 outline-none cursor-pointer hover:border-gray-300 transition-colors"
-                                                >
-                                                    {STATUS_OPTIONS.map(opt => (
-                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
+                                                <div className="flex items-center gap-2">
+                                                    <select 
+                                                        value={order.status}
+                                                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                                        className="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2 outline-none cursor-pointer hover:border-gray-300 transition-colors"
+                                                    >
+                                                        {STATUS_OPTIONS.map(opt => (
+                                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                    {/* WhatsApp Notification Button */}
+                                                    {order.customer_phone && (
+                                                        <button
+                                                            onClick={() => {
+                                                                const msgMap: Record<string, string> = {
+                                                                    'pending': `Olá ${order.customer_name}, recebemos seu pedido #${order.id.slice(0, 8)}!`,
+                                                                    'preparing': `Seu pedido #${order.id.slice(0, 8)} está sendo preparado! 🍳`,
+                                                                    'sent': `Saiu para entrega! 🛵 Pedido #${order.id.slice(0, 8)}.`,
+                                                                    'delivered': `Pedido entregue. Obrigado! ⭐`,
+                                                                    'problem': `Olá ${order.customer_name}, houve um imprevisto com o pedido #${order.id.slice(0, 8)}. Podemos conversar?`
+                                                                }
+                                                                const msg = msgMap[order.status] || `Olá ${order.customer_name}!`
+                                                                window.open(`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+                                                            }}
+                                                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
+                                                            title="Notificar Cliente"
+                                                        >
+                                                            <Phone size={20} />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

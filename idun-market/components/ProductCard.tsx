@@ -7,9 +7,10 @@ import clsx from 'clsx'
 
 interface ProductCardProps {
     product: Product
+    isStoreOpen?: boolean
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
     const { items, addItem, decreaseItem } = useCart()
 
     const cartItem = items.find((item) => item.id === product.id)
@@ -58,7 +59,12 @@ export function ProductCard({ product }: ProductCardProps) {
                     {quantity === 0 ? (
                         <button
                             onClick={() => addItem(product)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-full transition-colors"
+                            disabled={!isStoreOpen}
+                            className={`p-2 rounded-full transition-colors text-white ${
+                                !isStoreOpen 
+                                    ? 'bg-gray-300 cursor-not-allowed' 
+                                    : 'bg-emerald-600 hover:bg-emerald-700'
+                            }`}
                             aria-label="Adicionar ao carrinho"
                         >
                             <Plus size={20} />
