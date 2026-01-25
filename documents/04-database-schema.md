@@ -51,10 +51,21 @@ create table public.orders (
   id uuid default uuid_generate_v4() primary key,
   store_id uuid references public.stores(id) on delete cascade not null,
   customer_name text not null,
+  customer_address text, -- ADICIONADO: Endereço do cliente
   total_amount numeric(10,2) not null,
-  items_json jsonb not null,
+  items_json jsonb, -- ALTERADO: Removido 'not null' (agora é opcional/legado)
   payment_method text,
+  status text default 'pending', -- ADICIONADO: Status do pedido
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table public.order_items ( -- ADICIONADO: Tabela de Itens
+  id uuid default uuid_generate_v4() primary key,
+  order_id uuid references public.orders(id) on delete cascade not null,
+  product_name text not null,
+  quantity int not null,
+  unit_price numeric(10,2) not null,
+  total_price numeric(10,2) not null
 );
 
 -- 2. Row Level Security (RLS)
@@ -62,6 +73,7 @@ alter table public.stores enable row level security;
 alter table public.products enable row level security;
 alter table public.categories enable row level security;
 alter table public.orders enable row level security;
+alter table public.order_items enable row level security; -- ADICIONADO
 
 -- Policies (Lojas)
 create policy "Lojas públicas para leitura" on public.stores for select using (true);
@@ -74,6 +86,17 @@ create policy "Dono gerencia produtos" on public.products for all using (auth.ui
 -- Policies (Pedidos)
 create policy "Clientes criam pedidos" on public.orders for insert with check (true);
 create policy "Dono vê pedidos" on public.orders for select using (auth.uid() = store_id);
+
+-- Policies (Itens do Pedido) -- ADICIONADO
+create policy "Clientes inserem itens" on public.order_items for insert with check (true);
+
+create policy "Dono vê itens do pedido" on public.order_items for select using (
+  exists (
+    select 1 from public.orders
+    where public.orders.id = public.order_items.order_id
+    and public.orders.store_id = auth.uid()
+  )
+);
 
 -- 3. Trigger para Novos Usuários
 create or replace function public.handle_new_user()
