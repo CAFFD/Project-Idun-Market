@@ -179,7 +179,7 @@ ${itemsList}
                                         value={formData.name}
                                         onChange={handleInputChange}
                                         placeholder="Como você se chama?"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
                                     />
                                 </div>
                                 
@@ -193,7 +193,7 @@ ${itemsList}
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                         placeholder="(00) 00000-0000"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
                                     />
                                 </div>
 
@@ -210,7 +210,7 @@ ${itemsList}
                                         value={formData.cep}
                                         onChange={handleInputChange}
                                         placeholder="00000-000"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
                                     />
                                 </div>
                                 <div>
@@ -220,7 +220,7 @@ ${itemsList}
                                         value={formData.district}
                                         onChange={handleInputChange}
                                         placeholder="Seu bairro"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
                                     />
                                 </div>
                                 <div className="md:col-span-2">
@@ -230,7 +230,7 @@ ${itemsList}
                                         value={formData.address}
                                         onChange={handleInputChange}
                                         placeholder="Nome da rua"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
                                     />
                                 </div>
                                 <div>
@@ -240,7 +240,7 @@ ${itemsList}
                                         value={formData.number}
                                         onChange={handleInputChange}
                                         placeholder="123"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-12 text-base placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
                                     />
                                 </div>
                                 <div>
@@ -274,11 +274,11 @@ ${itemsList}
                             summary={null}
                         >
                              <div className="space-y-4">
-                                <div className="bg-blue-50 text-blue-800 p-4 rounded-lg flex items-start gap-3 text-sm mb-6">
+                                <div className="bg-blue-50 text-blue-800 p-4 rounded-lg flex items-start gap-3 text-sm mb-6 border border-blue-100">
                                     <div className="mt-0.5"><Circle size={16} fill="currentColor" className="text-blue-500" /></div>
                                     <div>
-                                        <p className="font-bold mb-1">Pagamento no ato da entrega</p>
-                                        <p>Você não paga nada agora. O pagamento é realizado diretamente com o entregador ao receber seu pedido.</p>
+                                        <p className="font-bold mb-1">Pagamento apenas na entrega</p>
+                                        <p>Não se preocupe! O pagamento é realizado apenas no momento da entrega. Você não será cobrado agora.</p>
                                     </div>
                                 </div>
 
@@ -294,7 +294,7 @@ ${itemsList}
                                             <Smartphone size={28} />
                                         </div>
                                         <div>
-                                            <span className="block font-bold text-gray-900 text-lg">Pix (Na Entrega)</span>
+                                            <span className="block font-bold text-gray-900 text-lg">Pix (Pagar na Entrega)</span>
                                             <span className="text-base text-emerald-600 font-medium">Pagamento instantâneo ao receber</span>
                                         </div>
                                     </div>
@@ -315,7 +315,7 @@ ${itemsList}
                                             <CreditCard size={28} />
                                         </div>
                                         <div>
-                                            <span className="block font-bold text-gray-900 text-lg">Cartão (Na Entrega)</span>
+                                            <span className="block font-bold text-gray-900 text-lg">Cartão (Pagar na Entrega)</span>
                                             <span className="text-base text-gray-500">Crédito ou Débito na maquininha</span>
                                         </div>
                                     </div>
