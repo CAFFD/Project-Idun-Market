@@ -1,9 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Plus, Minus, ShoppingCart } from 'lucide-react'
+import Image from 'next/image'
 import { Product, useCart } from '@/store/useCart'
-import clsx from 'clsx'
 
 interface ProductCardProps {
     product: Product
@@ -12,6 +12,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
     const { items, addItem, decreaseItem } = useCart()
+    const [imageError, setImageError] = useState(false)
 
     const cartItem = items.find((item) => item.id === product.id)
     const quantity = cartItem?.quantity || 0
@@ -22,75 +23,80 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
     }).format(product.price)
 
     return (
-        <div className="flex flex-col border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white h-full hover:shadow-md transition-shadow">
-            {/* Image Area */}
-            <div className="relative h-48 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                {product.image_url ? (
-                    <img
+        <div className="flex flex-row items-center p-4 bg-white gap-4 rounded-xl shadow-sm border border-gray-100 mb-4 hover:shadow-md hover:border-emerald-100 transition-all duration-200 cursor-pointer">
+            {/* Image (Left) */}
+            <div className="relative w-28 h-28 flex-shrink-0">
+                {!imageError && product.image_url ? (
+                    <Image
                         src={product.image_url}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover rounded-xl"
+                        sizes="(max-width: 768px) 112px, 112px"
+                        onError={() => setImageError(true)}
                     />
                 ) : (
-                    <div className="flex flex-col items-center justify-center text-gray-400">
-                        <ShoppingCart size={40} className="mb-2" />
-                        <span className="text-sm">Sem imagem</span>
+                    <div className="w-full h-full bg-gray-100 rounded-xl flex flex-col items-center justify-center text-gray-400">
+                        <ShoppingCart size={24} className="mb-1" />
+                        <span className="text-[10px]">Sem foto</span>
                     </div>
                 )}
             </div>
 
-            {/* Content Area */}
-            <div className="p-4 flex flex-col flex-1">
-                <h3 className="font-semibold text-gray-800 text-lg line-clamp-2 mb-1">
+            {/* Content (Middle) */}
+            {/* Content (Middle) */}
+            <div className="flex-1 flex flex-col gap-1 self-start min-w-0 py-1">
+                <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2">
                     {product.name}
                 </h3>
                 {product.description && (
-                    <p className="text-gray-500 text-sm mb-3 line-clamp-2 flex-grow">
+                    <p className="text-xs text-gray-500 line-clamp-2 leading-tight">
                         {product.description}
                     </p>
                 )}
                 
-                <div className="mt-auto pt-3 flex items-center justify-between">
-                    <span className="font-bold text-lg text-emerald-600">
-                        {formattedPrice}
-                    </span>
+                {/* Price Block */}
+                <div className="block mt-auto pt-2 font-bold text-emerald-600">
+                    {formattedPrice}
+                </div>
+            </div>
 
-                    {/* Add to Cart Controls */}
-                    {quantity === 0 ? (
+            {/* Controls (Right) */}
+            <div className="flex flex-col items-end justify-center gap-2 flex-shrink-0 self-center">
+                {quantity === 0 ? (
+                    <button
+                        onClick={() => addItem(product)}
+                        disabled={!isStoreOpen}
+                        className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors text-white shadow-sm ${
+                            !isStoreOpen 
+                                ? 'bg-gray-300 cursor-not-allowed' 
+                                : 'bg-emerald-600 hover:bg-emerald-700'
+                        }`}
+                        aria-label="Adicionar ao carrinho"
+                    >
+                        <Plus size={20} />
+                    </button>
+                ) : (
+                    <div className="flex items-center gap-2 bg-gray-100 rounded-full p-1">
+                        <button
+                            onClick={() => decreaseItem(product.id)}
+                            className="p-1 rounded-full text-gray-500 hover:bg-gray-200 transition-colors"
+                            aria-label="Remover um item"
+                        >
+                            <Minus size={16} />
+                        </button>
+                        <span className="text-sm font-semibold w-4 text-center text-gray-900">
+                            {quantity}
+                        </span>
                         <button
                             onClick={() => addItem(product)}
-                            disabled={!isStoreOpen}
-                            className={`p-2 rounded-full transition-colors text-white ${
-                                !isStoreOpen 
-                                    ? 'bg-gray-300 cursor-not-allowed' 
-                                    : 'bg-emerald-600 hover:bg-emerald-700'
-                            }`}
-                            aria-label="Adicionar ao carrinho"
+                            className="p-1 rounded-full text-emerald-600 hover:bg-gray-200 transition-colors"
+                            aria-label="Adicionar mais um"
                         >
-                            <Plus size={20} />
+                            <Plus size={16} />
                         </button>
-                    ) : (
-                        <div className="flex items-center gap-2 bg-gray-100 rounded-full px-1 py-1">
-                            <button
-                                onClick={() => decreaseItem(product.id)}
-                                className="p-1 rounded-full bg-white text-gray-700 shadow-sm hover:text-emerald-600 disabled:opacity-50"
-                                aria-label="Remover um item"
-                            >
-                                <Minus size={16} />
-                            </button>
-                            <span className="text-sm font-semibold w-6 text-center text-gray-900">
-                                {quantity}
-                            </span>
-                            <button
-                                onClick={() => addItem(product)}
-                                className="p-1 rounded-full bg-white text-gray-700 shadow-sm hover:text-emerald-600"
-                                aria-label="Adicionar mais um"
-                            >
-                                <Plus size={16} />
-                            </button>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     )

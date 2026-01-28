@@ -4,7 +4,7 @@ import { getStoreStatus } from '@/lib/storeService'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
-import { CartSummary } from '../components/CartSummary'
+import { FloatingCartBar } from '@/components/FloatingCartBar'
 
 // Fetch data on server
 async function getProducts() {
@@ -68,7 +68,7 @@ export default async function Home() {
                             <p>Nenhum produto encontrado.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-2 md:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                        <div className="grid grid-cols-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8">
                             {products.map((product) => (
                                 <ProductCard key={product.id} product={product} isStoreOpen={isStoreOpen} />
                             ))}
@@ -78,7 +78,7 @@ export default async function Home() {
             </div>
 
             {/* Floating Cart Footer */}
-            <CartSummary />
+            <FloatingCartBar />
         </main>
     )
 }
