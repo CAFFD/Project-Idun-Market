@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { ShoppingCart } from 'lucide-react'
 import { FloatingCartBar } from '@/components/FloatingCartBar'
 import { CartSheet } from '@/components/CartSheet'
+import { StoreStatusPill } from '@/components/StoreStatusPill'
+import { HeaderCartButton } from '@/components/HeaderCartButton'
 
 // Fetch data on server
 async function getProducts() {
@@ -28,18 +30,14 @@ export default async function Home() {
     return (
         <main className="min-h-screen bg-gray-50 pb-24">
             {/* Store Closed Banner */}
-            {!isStoreOpen && (
-                <div className="bg-red-500 text-white text-center py-3 px-4 font-bold sticky top-[73px] z-20 shadow-md">
-                    🚫 LOJA FECHADA NO MOMENTO. Voltamos em breve!
-                </div>
-            )}
+            {!isStoreOpen && <StoreStatusPill />}
 
             {/* Header */}
             <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
                 <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-emerald-700">Idun Market</h1>
                     <div className="relative">
-                        <ShoppingLink />
+                        <HeaderCartButton />
                     </div>
                 </div>
             </header>
@@ -85,10 +83,4 @@ export default async function Home() {
     )
 }
 
-function ShoppingLink() {
-    return (
-        <Link href="/checkout" className="p-2 text-gray-600 hover:text-emerald-600 transition-colors">
-            <ShoppingCart size={24} />
-        </Link>
-    )
-}
+

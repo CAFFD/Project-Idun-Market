@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react'
 import { useCart } from '@/store/useCart'
 import { createOrder } from '@/lib/orderService'
+import { getStoreStatus } from '@/lib/storeService'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, MapPin, User, Phone, CheckCircle2, Circle, Smartphone, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 import { StepCard } from '@/components/checkout/StepCard'
 import { OrderSummary } from '@/components/checkout/OrderSummary'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 // Icons mapping for payment methods
 const PaymentIcons = {
@@ -42,20 +44,46 @@ export default function CheckoutPage() {
         setMounted(true)
     }, [])
 
-    if (!mounted) return null
+    // Empty State & Store Status Check
+    useEffect(() => {
+        async function validateCheckout() {
+            if (!mounted) return
 
-    // Empty State
-    if (items.length === 0) {
+            // 1. Check Cart
+            if (items.length === 0) {
+                toast.info('Seu carrinho está vazio 🛒', {
+                    description: 'Adicione itens antes de finalizar o pedido.',
+                    duration: 4000,
+                })
+                router.push('/')
+                return
+            }
+
+            // 2. Check Store Status
+            try {
+                const { isOpen } = await getStoreStatus()
+                if (!isOpen) {
+                    toast.error('Loja Fechada 🌙', {
+                        description: 'Desculpe, a loja fechou enquanto você comprava.',
+                        duration: 5000,
+                    })
+                    router.push('/')
+                }
+            } catch (error) {
+                console.error('Error checking store status:', error)
+            }
+        }
+
+        validateCheckout()
+    }, [mounted, items, router])
+
+    if (!mounted || items.length === 0) {
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Seu carrinho está vazio 😢</h2>
-                <Link
-                    href="/"
-                    className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-semibold"
-                >
-                    <ArrowLeft size={20} />
-                    Voltar as compras
-                </Link>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 md:w-10 md:h-10 text-emerald-600 animate-spin" />
+                    <p className="text-gray-500 font-medium animate-pulse">Carregando...</p>
+                </div>
             </div>
         )
     }

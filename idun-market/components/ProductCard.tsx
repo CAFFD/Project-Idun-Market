@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Plus, Minus, ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
 import { Product, useCart } from '@/store/useCart'
+import { toast } from 'sonner'
 
 interface ProductCardProps {
     product: Product
@@ -65,11 +66,19 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
             <div className="flex flex-col items-end justify-center gap-2 flex-shrink-0 self-center">
                 {quantity === 0 ? (
                     <button
-                        onClick={() => addItem(product)}
-                        disabled={!isStoreOpen}
+                        onClick={() => {
+                            if (!isStoreOpen) {
+                                toast.error('Loja fechada no momento', {
+                                    description: 'Não é possível adicionar itens agora. Tente novamente mais tarde.',
+                                    duration: 3000,
+                                })
+                                return
+                            }
+                            addItem(product)
+                        }}
                         className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors text-white shadow-sm ${
                             !isStoreOpen 
-                                ? 'bg-gray-300 cursor-not-allowed' 
+                                ? 'bg-slate-800 hover:bg-slate-700 opacity-90' // Dark elegant style instead of disabled gray
                                 : 'bg-emerald-600 hover:bg-emerald-700'
                         }`}
                         aria-label="Adicionar ao carrinho"

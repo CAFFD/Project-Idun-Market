@@ -4,6 +4,8 @@ import React from 'react'
 import { useCart } from '@/store/useCart'
 import { X, Plus, Minus, Trash } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { getStoreStatus } from '@/lib/storeService'
 
 export function CartSheet() {
     const { items, isCartOpen, closeCart, addItem, decreaseItem, removeItem, totalPrice } = useCart()
@@ -13,9 +15,28 @@ export function CartSheet() {
     const deliveryFee = 5.90
     const finalTotal = subtotal + deliveryFee
 
-    const handleCheckout = () => {
-        closeCart()
-        router.push('/checkout')
+    const [checking, setChecking] = React.useState(false)
+
+    const handleCheckout = async () => {
+        setChecking(true)
+        try {
+            const { isOpen } = await getStoreStatus()
+            
+            if (!isOpen) {
+                toast.error('Loja Fechada 🌙', {
+                    description: 'Desculpe, a loja fechou. Não é possível finalizar agora.',
+                    duration: 4000,
+                })
+                setChecking(false)
+                return
+            }
+
+            closeCart()
+            router.push('/checkout')
+        } catch (error) {
+            console.error(error)
+            setChecking(false)
+        }
     }
 
     // REMOVED: if (!isCartOpen) return null -> To allow exit animations
@@ -131,10 +152,17 @@ export function CartSheet() {
 
                         <button 
                             onClick={handleCheckout}
-                            className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg"
+                            disabled={checking}
+                            className="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            <span>Finalizar Pedido</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                            {checking ? (
+                                <span className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    <span>Finalizar Pedido</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                </>
+                            )}
                         </button>
                     </div>
                 )}
