@@ -77,7 +77,16 @@ export async function createOrder(orderData: OrderData, items: { id: string, nam
 export async function getOrders(storeId?: string) {
     let query = supabase
         .from('orders')
-        .select('*')
+        .select(`
+            *,
+            order_items (
+                id,
+                product_name,
+                quantity,
+                unit_price,
+                total_price
+            )
+        `)
         .order('created_at', { ascending: false })
 
     // Se tiver store_id, filtra por ele (Futuro: para multi-tenancy real)
