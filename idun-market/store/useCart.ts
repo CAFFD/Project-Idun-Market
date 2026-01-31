@@ -8,6 +8,7 @@ export interface Product {
     image_url?: string | null
     description?: string | null
     category_id?: string | null
+    is_active?: boolean
     [key: string]: any
 }
 

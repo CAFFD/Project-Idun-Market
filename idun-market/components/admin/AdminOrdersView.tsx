@@ -63,12 +63,26 @@ export function AdminOrdersView() {
         }
     }
 
-    const filteredOrders = orders.filter(o => {
-        if (activeTab === 'queue') return ['pending', 'preparing', 'sent'].includes(o.status)
-        if (activeTab === 'problems') return ['problem'].includes(o.status)
-        if (activeTab === 'history') return ['delivered', 'canceled'].includes(o.status)
-        return false
-    })
+    // Filter & Sort Logic
+    const filteredOrders = orders
+        .filter(o => {
+            if (activeTab === 'queue') return ['pending', 'preparing', 'sent'].includes(o.status)
+            if (activeTab === 'problems') return ['problem'].includes(o.status)
+            if (activeTab === 'history') return ['delivered', 'canceled'].includes(o.status)
+            return false
+        })
+        .sort((a, b) => {
+            const dateA = new Date(a.created_at).getTime()
+            const dateB = new Date(b.created_at).getTime()
+
+            // FIFO for Queue (Oldest first - "Don't let orders rot")
+            if (activeTab === 'queue') {
+                return dateA - dateB 
+            }
+            
+            // LIFO for History & Problems (Newest first - "See what just finished/happened")
+            return dateB - dateA 
+        })
 
     if (loading) {
         return (

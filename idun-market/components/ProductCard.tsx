@@ -23,8 +23,10 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
         currency: 'BRL',
     }).format(product.price)
 
+    const isActive = product.is_active !== false // Default to true if undefined
+
     return (
-        <div className="flex flex-row items-center p-4 bg-white gap-4 rounded-xl shadow-sm border border-gray-100 mb-4 hover:shadow-md hover:border-emerald-100 transition-all duration-200 cursor-pointer">
+        <div className={`flex flex-row items-center p-4 bg-white gap-4 rounded-xl shadow-sm border border-gray-100 mb-4 transition-all duration-200 ${!isActive ? 'opacity-75 bg-gray-50' : 'hover:shadow-md hover:border-emerald-100 cursor-pointer'}`}>
             {/* Image (Left) */}
             <div className="relative w-28 h-28 flex-shrink-0">
                 {!imageError && product.image_url ? (
@@ -32,7 +34,7 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
                         src={product.image_url}
                         alt={product.name}
                         fill
-                        className="object-cover rounded-xl"
+                        className={`object-cover rounded-xl ${!isActive ? 'grayscale' : ''}`}
                         sizes="(max-width: 768px) 112px, 112px"
                         onError={() => setImageError(true)}
                     />
@@ -42,12 +44,18 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
                         <span className="text-[10px]">Sem foto</span>
                     </div>
                 )}
+                {!isActive && (
+                    <div className="absolute inset-0 bg-black/10 rounded-xl flex items-center justify-center backdrop-blur-[1px]">
+                         <span className="bg-gray-900/80 text-white text-[10px] font-bold uppercase px-2 py-1 rounded-md shadow-sm">
+                            Esgotado
+                         </span>
+                    </div>
+                )}
             </div>
 
             {/* Content (Middle) */}
-            {/* Content (Middle) */}
             <div className="flex-1 flex flex-col gap-1 self-start min-w-0 py-1">
-                <h3 className="font-semibold text-gray-900 text-base leading-tight line-clamp-2">
+                <h3 className={`font-semibold text-base leading-tight line-clamp-2 ${!isActive ? 'text-gray-500' : 'text-gray-900'}`}>
                     {product.name}
                 </h3>
                 {product.description && (
@@ -57,7 +65,7 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
                 )}
                 
                 {/* Price Block */}
-                <div className="block mt-auto pt-2 font-bold text-emerald-600">
+                <div className={`block mt-auto pt-2 font-bold ${!isActive ? 'text-gray-400 decoration-slice' : 'text-emerald-600'}`}>
                     {formattedPrice}
                 </div>
             </div>
@@ -66,6 +74,7 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
             <div className="flex flex-col items-end justify-center gap-2 flex-shrink-0 self-center">
                 {quantity === 0 ? (
                     <button
+                        disabled={!isActive}
                         onClick={() => {
                             if (!isStoreOpen) {
                                 toast.error('Loja fechada no momento', {
@@ -74,12 +83,14 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
                                 })
                                 return
                             }
-                            addItem(product)
+                            if (isActive) addItem(product)
                         }}
                         className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors text-white shadow-sm ${
-                            !isStoreOpen 
-                                ? 'bg-slate-800 hover:bg-slate-700 opacity-90' // Dark elegant style instead of disabled gray
-                                : 'bg-emerald-600 hover:bg-emerald-700'
+                            !isActive 
+                                ? 'bg-gray-300 cursor-not-allowed'
+                                : !isStoreOpen 
+                                    ? 'bg-slate-800 hover:bg-slate-700 opacity-90' 
+                                    : 'bg-emerald-600 hover:bg-emerald-700'
                         }`}
                         aria-label="Adicionar ao carrinho"
                     >
