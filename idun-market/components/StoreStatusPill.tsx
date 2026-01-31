@@ -1,9 +1,20 @@
+'use client'
+
 import React from 'react'
 import { Moon } from 'lucide-react'
+import { useCart } from '@/store/useCart'
 
 export function StoreStatusPill() {
+    const { items } = useCart()
+    const hasItems = items.length > 0
+
     return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-500">
+        <div 
+            className={`
+                fixed left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-500 transition-all ease-in-out
+                ${hasItems ? 'bottom-24 md:bottom-28' : 'bottom-6'}
+            `}
+        >
             <div className="bg-slate-900/95 backdrop-blur-md text-white px-6 py-3.5 rounded-full shadow-xl flex items-center gap-4 border border-slate-700/50">
                 <div className="relative">
                     <Moon size={20} className="text-emerald-400" fill="currentColor" />
