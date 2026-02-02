@@ -5,19 +5,15 @@ import { useCart } from '@/store/useCart'
 import { createOrder } from '@/lib/orderService'
 import { getStoreStatus } from '@/lib/storeService'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, MapPin, User, Phone, CheckCircle2, Circle, Smartphone, CreditCard } from 'lucide-react'
+import { ArrowLeft, MapPin, User, Phone, CheckCircle2, Circle, Smartphone, CreditCard, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { StepCard } from '@/components/checkout/StepCard'
 import { OrderSummary } from '@/components/checkout/OrderSummary'
-import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-
-// Icons mapping for payment methods
-const PaymentIcons = {
-    Pix: CheckCircle2, // Just a placeholder, ideally a QrCode icon or specific Pix SVG
-    Card: CreditCard,
-    Money: CheckCircle2
-}
+import { step1Schema, step2Schema, step3Schema, checkoutSchema, type CheckoutData } from '@/lib/schemas/checkout'
+import { formatPhone, formatCEP } from '@/lib/utils'
+import { getAddressByCEP } from '@/lib/cepService'
+import { ZodError } from 'zod'
 
 export default function CheckoutPage() {
     // Global State
@@ -28,7 +24,7 @@ export default function CheckoutPage() {
     const [loading, setLoading] = useState(false)
 
     // Form State
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<CheckoutData>({
         name: '',
         phone: '',
         cep: '',
@@ -36,13 +32,32 @@ export default function CheckoutPage() {
         number: '',
         complement: '',
         district: '',
-        paymentMethod: 'Pix'
+        paymentMethod: 'Pix' // Default
     })
 
-    // Hydration fix
+    // Validation Errors
+    const [errors, setErrors] = useState<Partial<Record<keyof CheckoutData, string>>>({})
+
+    // Hydration & Persistence
     useEffect(() => {
         setMounted(true)
+        const savedData = localStorage.getItem('checkout_data')
+        if (savedData) {
+            try {
+                const parsed = JSON.parse(savedData)
+                setFormData(prev => ({ ...prev, ...parsed }))
+            } catch (e) {
+                console.error("Failed to parse saved checkout data", e)
+            }
+        }
     }, [])
+
+    // Save to localStorage on change
+    useEffect(() => {
+        if (mounted) {
+            localStorage.setItem('checkout_data', JSON.stringify(formData))
+        }
+    }, [formData, mounted])
 
     // Empty State & Store Status Check
     useEffect(() => {
@@ -91,27 +106,76 @@ export default function CheckoutPage() {
     // Handlers
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
-        setFormData(prev => ({ ...prev, [name]: value }))
-    }
+        let formattedValue = value
 
-    const validateStep1 = () => {
-        // Basic validation
-        return formData.name && formData.phone && formData.address && formData.number && formData.district
-    }
+        if (name === 'phone') formattedValue = formatPhone(value)
+        if (name === 'cep') formattedValue = formatCEP(value)
 
-    const handleContinueToPayment = () => {
-        if (!validateStep1()) {
-            alert('Por favor, preencha todos os campos obrigatórios.')
-            return
+        setFormData(prev => ({ ...prev, [name]: formattedValue }))
+        
+        // Clear error when user types
+        if (errors[name as keyof CheckoutData]) {
+            setErrors(prev => ({ ...prev, [name]: undefined }))
         }
-        setCurrentStep(2)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    const handleBlurCEP = async () => {
+        if (formData.cep.length === 9) {
+            const data = await getAddressByCEP(formData.cep)
+            if (data) {
+                setFormData(prev => ({
+                    ...prev,
+                    address: data.logradouro,
+                    district: data.bairro,
+                    complement: prev.complement || data.complemento // Keep existing if user typed
+                }))
+                toast.success('Endereço encontrado!')
+            } else {
+                toast.error('CEP não encontrado')
+            }
+        }
+    }
+
+    const validateStep = (step: number) => {
+        try {
+            if (step === 1) step1Schema.parse(formData)
+            if (step === 2) step2Schema.parse(formData)
+            if (step === 3) step3Schema.parse(formData)
+            return true
+        } catch (error) {
+            if (error instanceof ZodError) {
+                const newErrors: Partial<Record<keyof CheckoutData, string>> = {}
+                error.issues.forEach((err) => {
+                    const field = err.path[0] as keyof CheckoutData
+                    if (field) {
+                        newErrors[field] = err.message
+                    }
+                })
+                setErrors(newErrors)
+                
+                 // Show first error toast
+                 const firstError = Object.values(newErrors)[0]
+                 if (firstError) toast.error(firstError)
+            }
+            return false
+        }
+    }
+
+    const goToNextStep = (step: number) => {
+        if (validateStep(step)) {
+            setCurrentStep(step + 1)
+        }
     }
 
     const handleCheckout = async () => {
+        if (!validateStep(3)) return
+
         setLoading(true)
 
         try {
+            // Final validation of everything
+            checkoutSchema.parse(formData)
+
             const total = totalPrice()
             const fullAddress = `${formData.address}, ${formData.number} - ${formData.district} ${formData.complement ? `(${formData.complement})` : ''} - CEP: ${formData.cep}`
             const firstItemStoreId = items[0]?.store_id || null
@@ -133,7 +197,7 @@ export default function CheckoutPage() {
                 .map((item) => `- ${item.quantity}x ${item.name} (R$ ${(item.price * item.quantity).toFixed(2)})`)
                 .join('\n')
 
-            const totalFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total + 5.90) // Adding delivery fee assumption
+            const totalFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total + 5.90)
 
             const message = `*NOVO PEDIDO #${orderId?.slice(0, 8).toUpperCase()}*
             
@@ -153,13 +217,14 @@ ${itemsList}
             const url = `https://wa.me/${targetNumber}?text=${encodedMessage}`
 
             // 3. Clear & Redirect
+            localStorage.removeItem('checkout_data') // Clear saved form
             items.forEach(item => removeItem(item.id))
             window.open(url, '_blank')
             router.push('/')
 
         } catch (err) {
             console.error(err)
-            alert('Erro ao processar pedido. Tente novamente.')
+            toast.error('Erro ao processar pedido. Tente novamente.')
         } finally {
             setLoading(false)
         }
@@ -178,12 +243,12 @@ ${itemsList}
             </header>
 
             <main className="container mx-auto max-w-5xl px-4 lg:px-8">
-                {/* Mobile Top Summary (No Button) */}
+                {/* Mobile Top Summary */}
                 <div className="lg:hidden mb-6">
                     <OrderSummary 
                         onCheckout={handleCheckout} 
                         loading={loading}
-                        canCheckout={currentStep === 2}
+                        canCheckout={currentStep === 3}
                         hideButton={true}
                     />
                 </div>
@@ -193,17 +258,16 @@ ${itemsList}
                     {/* Left Column: Steps */}
                     <div className="lg:col-span-8 flex flex-col gap-6">
                         
-                        {/* Step 1: Identification & Address */}
+                        {/* Step 1: Identification */}
                         <StepCard
                             stepNumber={1}
-                            title="Identificação e Entrega"
+                            title="Identificação"
                             isActive={currentStep === 1}
                             isCompleted={currentStep > 1}
                             onEdit={() => setCurrentStep(1)}
                             summary={
                                 <div className="flex flex-col gap-1 text-base">
                                     <p className="font-medium text-gray-900">{formData.name}</p>
-                                    <p>{formData.address}, {formData.number} - {formData.district}</p>
                                     <p className="text-sm text-gray-500">{formData.phone}</p>
                                 </div>
                             }
@@ -218,8 +282,11 @@ ${itemsList}
                                         value={formData.name}
                                         onChange={handleInputChange}
                                         placeholder="Como você se chama?"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-11 md:h-12 text-base text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className={`w-full rounded-lg border bg-gray-50 px-4 h-11 md:h-12 text-base outline-none transition-all
+                                            ${errors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-500'}
+                                        `}
                                     />
+                                    {errors.name && <span className="text-red-500 text-xs mt-1">{errors.name}</span>}
                                 </div>
                                 
                                 <div className="md:col-span-2">
@@ -232,25 +299,54 @@ ${itemsList}
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                         placeholder="(00) 00000-0000"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-11 md:h-12 text-base text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        maxLength={15}
+                                        className={`w-full rounded-lg border bg-gray-50 px-4 h-11 md:h-12 text-base outline-none transition-all
+                                            ${errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-500'}
+                                        `}
                                     />
+                                    {errors.phone && <span className="text-red-500 text-xs mt-1">{errors.phone}</span>}
                                 </div>
+                            </div>
+                            
+                            <div className="mt-6 flex justify-end">
+                                <button 
+                                    onClick={() => goToNextStep(1)}
+                                    className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all active:scale-[0.98] text-base"
+                                >
+                                    Ir para Entrega
+                                </button>
+                            </div>
+                        </StepCard>
 
-                                <div className="md:col-span-2 border-t border-gray-100 my-1 pt-4">
-                                    <h4 className="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
-                                        <MapPin size={20} className="text-emerald-600"/> Endereço de Entrega
-                                    </h4>
+                        {/* Step 2: Address */}
+                        <StepCard
+                            stepNumber={2}
+                            title="Endereço de Entrega"
+                            isActive={currentStep === 2}
+                            isCompleted={currentStep > 2}
+                            onEdit={() => setCurrentStep(2)}
+                             summary={
+                                <div className="flex flex-col gap-1 text-base">
+                                    <p>{formData.address}, {formData.number} - {formData.district}</p>
+                                    <p className="text-sm text-gray-500">CEP: {formData.cep}</p>
                                 </div>
-
+                            }
+                        >
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
                                     <input
                                         name="cep"
                                         value={formData.cep}
                                         onChange={handleInputChange}
+                                        onBlur={handleBlurCEP}
                                         placeholder="00000-000"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-11 md:h-12 text-base text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        maxLength={9}
+                                        className={`w-full rounded-lg border bg-gray-50 px-4 h-11 md:h-12 text-base outline-none transition-all
+                                            ${errors.cep ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-500'}
+                                        `}
                                     />
+                                    {errors.cep && <span className="text-red-500 text-xs mt-1">{errors.cep}</span>}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
@@ -259,18 +355,26 @@ ${itemsList}
                                         value={formData.district}
                                         onChange={handleInputChange}
                                         placeholder="Seu bairro"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-11 md:h-12 text-base text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className={`w-full rounded-lg border bg-gray-50 px-4 h-11 md:h-12 text-base outline-none transition-all
+                                            ${errors.district ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-500'}
+                                        `}
                                     />
+                                     {errors.district && <span className="text-red-500 text-xs mt-1">{errors.district}</span>}
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Endereço (Rua/Av)</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                                        <MapPin size={16} /> Endereço (Rua/Av)
+                                    </label>
                                     <input
                                         name="address"
                                         value={formData.address}
                                         onChange={handleInputChange}
                                         placeholder="Nome da rua"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-11 md:h-12 text-base text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className={`w-full rounded-lg border bg-gray-50 px-4 h-11 md:h-12 text-base outline-none transition-all
+                                            ${errors.address ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-500'}
+                                        `}
                                     />
+                                    {errors.address && <span className="text-red-500 text-xs mt-1">{errors.address}</span>}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Número</label>
@@ -279,8 +383,11 @@ ${itemsList}
                                         value={formData.number}
                                         onChange={handleInputChange}
                                         placeholder="123"
-                                        className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-11 md:h-12 text-base text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
+                                        className={`w-full rounded-lg border bg-gray-50 px-4 h-11 md:h-12 text-base outline-none transition-all
+                                            ${errors.number ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-500'}
+                                        `}
                                     />
+                                    {errors.number && <span className="text-red-500 text-xs mt-1">{errors.number}</span>}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Complemento (Opcional)</label>
@@ -288,27 +395,27 @@ ${itemsList}
                                         name="complement"
                                         value={formData.complement}
                                         onChange={handleInputChange}
-                                        placeholder="Ap 101, Bloco C"
+                                        placeholder="Ap 101"
                                         className="w-full rounded-lg border-gray-300 bg-gray-50 px-4 h-11 md:h-12 text-base text-gray-900 placeholder:text-gray-500 focus:bg-white focus:border-emerald-500 focus:ring-emerald-500 transition-all outline-none border"
                                     />
                                 </div>
                             </div>
-                            
-                            <div className="mt-8 flex justify-end">
+
+                             <div className="mt-6 flex justify-end">
                                 <button 
-                                    onClick={handleContinueToPayment}
-                                    className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all active:scale-[0.98] text-lg"
+                                    onClick={() => goToNextStep(2)}
+                                    className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all active:scale-[0.98] text-base"
                                 >
-                                    Ir para o Pagamento
+                                    Ir para Pagamento
                                 </button>
                             </div>
                         </StepCard>
 
-                        {/* Step 2: Payment */}
+                        {/* Step 3: Payment */}
                         <StepCard
-                            stepNumber={2}
+                            stepNumber={3}
                             title="Pagamento"
-                            isActive={currentStep === 2}
+                            isActive={currentStep === 3}
                             isCompleted={false}
                             summary={null}
                         >
@@ -317,7 +424,7 @@ ${itemsList}
                                     <div className="mt-0.5"><Circle size={16} fill="currentColor" className="text-blue-500" /></div>
                                     <div>
                                         <p className="font-bold mb-1">Pagamento apenas na entrega</p>
-                                        <p>Não se preocupe! O pagamento é realizado apenas no momento da entrega. Você não será cobrado agora.</p>
+                                        <p>Não se preocupe! O pagamento é realizado apenas no momento da entrega.</p>
                                     </div>
                                 </div>
 
@@ -334,7 +441,7 @@ ${itemsList}
                                         </div>
                                         <div>
                                             <span className="block font-bold text-gray-900 text-lg">Pix (Pagar na Entrega)</span>
-                                            <span className="text-base text-emerald-600 font-medium">Pagamento instantâneo ao receber</span>
+                                            <span className="text-base text-emerald-600 font-medium">Pagamento instantâneo</span>
                                         </div>
                                     </div>
                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${formData.paymentMethod === 'Pix' ? 'border-emerald-500' : 'border-gray-300'}`}>
@@ -372,7 +479,7 @@ ${itemsList}
                         <OrderSummary 
                             onCheckout={handleCheckout} 
                             loading={loading}
-                            canCheckout={currentStep === 2}
+                            canCheckout={currentStep === 3}
                         />
                     </div>
                     
@@ -390,7 +497,7 @@ ${itemsList}
                     </div>
                     <button 
                         onClick={handleCheckout}
-                        disabled={loading || currentStep !== 2}
+                        disabled={loading || currentStep !== 3}
                         className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed h-12 flex items-center justify-center"
                     >
                          {loading ? <Loader2 className="animate-spin" /> : 'Finalizar Pedido'}
