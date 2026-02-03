@@ -9,15 +9,8 @@ import { ptBR } from 'date-fns/locale'
 import { ArrowLeft, Loader2, Package, Phone } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner' // Import Toast
-
-interface Order {
-    id: string
-    created_at: string
-    customer_name: string
-    customer_phone: string
-    total_amount: number
-    status: string
-}
+import { getWhatsappMessage, WhatsappMessageType } from '@/lib/whatsappTemplates'
+import { Order } from '@/lib/types'
 
 const STATUS_OPTIONS = [
     { value: 'pending', label: 'Pendente', color: 'bg-yellow-100 text-yellow-800' },
@@ -144,14 +137,12 @@ export default function AdminOrdersPage() {
                                             {order.customer_phone && (
                                                 <button
                                                     onClick={() => {
-                                                        const msgMap: Record<string, string> = {
-                                                            'pending': `Olá ${order.customer_name}, recebemos seu pedido #${order.id.slice(0, 8)}!`,
-                                                            'preparing': `Seu pedido #${order.id.slice(0, 8)} está sendo preparado! 🍳`,
-                                                            'sent': `Saiu para entrega! 🛵 Pedido #${order.id.slice(0, 8)}.`,
-                                                            'delivered': `Pedido entregue. Obrigado! ⭐`,
-                                                            'problem': `Olá ${order.customer_name}, houve um imprevisto com o pedido #${order.id.slice(0, 8)}. Podemos conversar?`
-                                                        }
-                                                        const msg = msgMap[order.status] || `Olá ${order.customer_name}!`
+                                                        const msg = getWhatsappMessage(order.status as WhatsappMessageType, {
+                                                            customerName: order.customer_name,
+                                                            orderId: order.id,
+                                                            addressStreet: order.customer_address,
+                                                            storeName: 'Idun Market'
+                                                        })
                                                         window.open(`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
                                                     }}
                                                     className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
@@ -206,14 +197,12 @@ export default function AdminOrdersPage() {
                                                     {order.customer_phone && (
                                                         <button
                                                             onClick={() => {
-                                                                const msgMap: Record<string, string> = {
-                                                                    'pending': `Olá ${order.customer_name}, recebemos seu pedido #${order.id.slice(0, 8)}!`,
-                                                                    'preparing': `Seu pedido #${order.id.slice(0, 8)} está sendo preparado! 🍳`,
-                                                                    'sent': `Saiu para entrega! 🛵 Pedido #${order.id.slice(0, 8)}.`,
-                                                                    'delivered': `Pedido entregue. Obrigado! ⭐`,
-                                                                    'problem': `Olá ${order.customer_name}, houve um imprevisto com o pedido #${order.id.slice(0, 8)}. Podemos conversar?`
-                                                                }
-                                                                const msg = msgMap[order.status] || `Olá ${order.customer_name}!`
+                                                                const msg = getWhatsappMessage(order.status as WhatsappMessageType, {
+                                                                    customerName: order.customer_name,
+                                                                    orderId: order.id,
+                                                                    addressStreet: order.customer_address,
+                                                                    storeName: 'Idun Market'
+                                                                })
                                                                 window.open(`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
                                                             }}
                                                             className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"

@@ -8,16 +8,7 @@ import { Clock, AlertCircle, Archive, Loader2, ChevronRight, Package, User } fro
 import { toast } from 'sonner'
 import { OrderDetailsModal } from './OrderDetailsModal'
 
-export interface Order {
-    id: string
-    created_at: string
-    customer_name: string
-    customer_phone: string
-    customer_address?: string
-    total_amount: number
-    status: string
-    items?: any[]
-}
+import { Order } from '@/lib/types'
 
 const TABS = [
     { id: 'queue', label: 'Fila de Produção', icon: Clock },

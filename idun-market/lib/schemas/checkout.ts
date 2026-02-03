@@ -17,9 +17,7 @@ export const step2Schema = z.object({
 });
 
 export const step3Schema = z.object({
-  paymentMethod: z.enum(['Pix', 'Cartão', 'Dinheiro'], {
-    invalid_type_error: 'Selecione uma forma de pagamento válida'
-  })
+  paymentMethod: z.enum(['Pix', 'Cartão', 'Dinheiro'] as const)
 });
 
 export const checkoutSchema = step1Schema.merge(step2Schema).merge(step3Schema);

@@ -14,6 +14,7 @@ import { step1Schema, step2Schema, step3Schema, checkoutSchema, type CheckoutDat
 import { formatPhone, formatCEP } from '@/lib/utils'
 import { getAddressByCEP } from '@/lib/cepService'
 import { ZodError } from 'zod'
+import { getWhatsappMessage } from '@/lib/whatsappTemplates'
 
 export default function CheckoutPage() {
     // Global State
@@ -193,24 +194,13 @@ export default function CheckoutPage() {
             if (error) throw new Error(error)
 
             // 2. WhatsApp Message
-            const itemsList = items
-                .map((item) => `- ${item.quantity}x ${item.name} (R$ ${(item.price * item.quantity).toFixed(2)})`)
-                .join('\n')
-
-            const totalFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total + 5.90)
-
-            const message = `*NOVO PEDIDO #${orderId?.slice(0, 8).toUpperCase()}*
-            
-Cliente: *${formData.name}*
-Contato: ${formData.phone}
-Endereço: ${fullAddress}
-Pagamento: ${formData.paymentMethod}
-
-*Itens:*
-${itemsList}
-*Taxa de entrega: R$ 5,90*
-
-*Total: ${totalFormatted}*`
+            const message = getWhatsappMessage('created', {
+                customerName: formData.name,
+                orderId: orderId || '000',
+                total: total + 5.90,
+                deliveryTime: 40, 
+                storeName: 'Idun Market'
+            })
 
             const encodedMessage = encodeURIComponent(message)
             const targetNumber = whatsappNumber || '5511999999999'

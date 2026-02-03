@@ -2,9 +2,10 @@
 
 import React from 'react'
 import { X, Phone, Clock, MapPin, CreditCard, User, CheckCircle2 } from 'lucide-react'
-import { Order } from './AdminOrdersView'
+import { Order } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { getWhatsappMessage, WhatsappMessageType } from '@/lib/whatsappTemplates'
 
 interface OrderDetailsModalProps {
     order: Order | null
@@ -34,7 +35,7 @@ export function OrderDetailsModal({ order, onClose, onStatusChange }: OrderDetai
     if (!order) return null
 
     const timeElapsed = formatDistanceToNow(new Date(order.created_at), { locale: ptBR, addSuffix: false })
-    const items = order.items || [] 
+    const items = order.order_items || [] 
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -144,7 +145,13 @@ export function OrderDetailsModal({ order, onClose, onStatusChange }: OrderDetai
                     {order.customer_phone && (
                          <button
                             onClick={() => {
-                                const msg = `Olá ${order.customer_name}, referente ao pedido #${order.id.slice(0, 4)}...`
+                                const msg = getWhatsappMessage(order.status as WhatsappMessageType, {
+                                    customerName: order.customer_name,
+                                    orderId: order.id,
+                                    addressStreet: order.customer_address,
+                                    reason: '',
+                                    storeName: 'Idun Market'
+                                })
                                 window.open(`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
                             }}
                             className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-50 text-emerald-700 font-bold rounded-xl hover:bg-emerald-100 transition-colors"
