@@ -15,6 +15,7 @@ import { formatPhone, formatCEP } from '@/lib/utils'
 import { getAddressByCEP } from '@/lib/cepService'
 import { ZodError } from 'zod'
 import { getWhatsappMessage } from '@/lib/whatsappTemplates'
+import { openWhatsapp } from '@/lib/whatsapp'
 
 export default function CheckoutPage() {
     // Global State
@@ -202,14 +203,13 @@ export default function CheckoutPage() {
                 storeName: 'Idun Market'
             })
 
-            const encodedMessage = encodeURIComponent(message)
             const targetNumber = whatsappNumber || '5511999999999'
-            const url = `https://wa.me/${targetNumber}?text=${encodedMessage}`
+            openWhatsapp(targetNumber, message)
 
             // 3. Clear & Redirect
             localStorage.removeItem('checkout_data') // Clear saved form
             items.forEach(item => removeItem(item.id))
-            window.open(url, '_blank')
+
             router.push('/')
 
         } catch (err) {

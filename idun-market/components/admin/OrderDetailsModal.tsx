@@ -6,6 +6,7 @@ import { Order } from '@/lib/types'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getWhatsappMessage, WhatsappMessageType } from '@/lib/whatsappTemplates'
+import { openWhatsapp } from '@/lib/whatsapp'
 
 interface OrderDetailsModalProps {
     order: Order | null
@@ -152,7 +153,7 @@ export function OrderDetailsModal({ order, onClose, onStatusChange }: OrderDetai
                                     reason: '',
                                     storeName: 'Idun Market'
                                 })
-                                window.open(`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+                                openWhatsapp(order.customer_phone, msg)
                             }}
                             className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-50 text-emerald-700 font-bold rounded-xl hover:bg-emerald-100 transition-colors"
                         >

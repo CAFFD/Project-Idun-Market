@@ -10,6 +10,7 @@ import { ArrowLeft, Loader2, Package, Phone } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner' // Import Toast
 import { getWhatsappMessage, WhatsappMessageType } from '@/lib/whatsappTemplates'
+import { openWhatsapp } from '@/lib/whatsapp'
 import { Order } from '@/lib/types'
 
 const STATUS_OPTIONS = [
@@ -143,7 +144,7 @@ export default function AdminOrdersPage() {
                                                             addressStreet: order.customer_address,
                                                             storeName: 'Idun Market'
                                                         })
-                                                        window.open(`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+                                                        openWhatsapp(order.customer_phone, msg)
                                                     }}
                                                     className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
                                                     title="Notificar Cliente"
@@ -203,7 +204,7 @@ export default function AdminOrdersPage() {
                                                                     addressStreet: order.customer_address,
                                                                     storeName: 'Idun Market'
                                                                 })
-                                                                window.open(`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+                                                                openWhatsapp(order.customer_phone, msg)
                                                             }}
                                                             className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
                                                             title="Notificar Cliente"
