@@ -11,7 +11,7 @@ import { HeaderCartButton } from '@/components/HeaderCartButton'
 
 // Fetch data on server
 async function getProducts() {
-    const { data } = await supabase.from('products').select('*').eq('is_active', true)
+    const { data } = await supabase.from('products').select('*').order('is_active', { ascending: false })
     return data || []
 }
 

@@ -76,6 +76,8 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
                     <button
                         disabled={!isActive}
                         onClick={() => {
+                            if (!isActive) return
+
                             if (!isStoreOpen) {
                                 toast.error('Loja fechada no momento', {
                                     description: 'Não é possível adicionar itens agora. Tente novamente mais tarde.',
@@ -83,7 +85,7 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
                                 })
                                 return
                             }
-                            if (isActive) addItem(product)
+                            addItem(product)
                         }}
                         className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors text-white shadow-sm ${
                             !isActive 
@@ -109,7 +111,10 @@ export function ProductCard({ product, isStoreOpen = true }: ProductCardProps) {
                             {quantity}
                         </span>
                         <button
-                            onClick={() => addItem(product)}
+                            onClick={() => {
+                                if (!isActive) return
+                                addItem(product)
+                            }}
                             className="p-1 rounded-full text-emerald-600 hover:bg-gray-200 transition-colors"
                             aria-label="Adicionar mais um"
                         >
