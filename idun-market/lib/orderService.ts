@@ -101,10 +101,15 @@ export async function getOrders(storeId?: string) {
     return data
 }
 
-export async function updateOrderStatus(orderId: string, status: string) {
+export async function updateOrderStatus(orderId: string, status: string, reason?: string) {
+    const updateData: any = { status }
+    if (reason) {
+        updateData.cancel_reason = reason
+    }
+
     const { error } = await supabase
         .from('orders')
-        .update({ status })
+        .update(updateData)
         .eq('id', orderId)
     
     if (error) throw error

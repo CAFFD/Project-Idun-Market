@@ -6,5 +6,6 @@ export interface Order {
     customer_address?: string
     total_amount: number
     status: string
+    cancel_reason?: string
     order_items?: any[]
 }

@@ -7,6 +7,9 @@ import { ptBR } from 'date-fns/locale'
 import { Clock, AlertCircle, Archive, Loader2, ChevronRight, Package, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { OrderDetailsModal } from './OrderDetailsModal'
+import { OrderActionModal } from './OrderActionModal'
+import { getWhatsappMessage, WhatsappMessageType } from '@/lib/whatsappTemplates'
+import { openWhatsapp } from '@/lib/whatsapp'
 
 import { Order } from '@/lib/types'
 
@@ -16,11 +19,17 @@ const TABS = [
     { id: 'history', label: 'Histórico', icon: Archive },
 ]
 
+
 export function AdminOrdersView() {
     const [orders, setOrders] = useState<Order[]>([])
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState('queue')
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+    const [actionModal, setActionModal] = useState<{ isOpen: boolean, mode: 'problem' | 'cancel' | 'resume', orderId: string | null }>({
+        isOpen: false,
+        mode: 'problem',
+        orderId: null
+    })
 
     useEffect(() => {
         loadOrders()
@@ -40,19 +49,45 @@ export function AdminOrdersView() {
         }
     }
 
-    const handleStatusChange = async (orderId: string, newStatus: string) => {
+    const handleStatusChange = async (orderId: string, newStatus: string, reason?: string) => {
         const oldOrders = [...orders]
-        setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
+        setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, cancel_reason: reason } : o))
 
         try {
-            await updateOrderStatus(orderId, newStatus)
+            await updateOrderStatus(orderId, newStatus, reason)
             toast.success('Status atualizado!')
+            
+            // Send WhatsApp for Canceled OR Problem
+            if (reason && (newStatus === 'canceled' || newStatus === 'problem')) {
+                const order = orders.find(o => o.id === orderId)
+                if (order && order.customer_phone) {
+                     const msg = getWhatsappMessage(newStatus as WhatsappMessageType, {
+                        customerName: order.customer_name,
+                        orderId: order.id,
+                        reason: reason
+                    })
+                    openWhatsapp(order.customer_phone, msg)
+                }
+            }
+
         } catch (error) {
             console.error('Erro ao atualizar status:', error)
             toast.error('Erro ao atualizar status')
             setOrders(oldOrders)
         }
     }
+
+    const openActionModal = (orderId: string, mode: 'problem' | 'cancel' | 'resume') => {
+        setActionModal({ isOpen: true, mode, orderId })
+    }
+
+    const handleActionSubmit = (status: string, reason?: string) => {
+        if (actionModal.orderId) {
+            handleStatusChange(actionModal.orderId, status, reason)
+            setActionModal({ ...actionModal, isOpen: false })
+        }
+    }
+
 
     // Filter & Sort Logic
     const filteredOrders = orders
@@ -133,7 +168,8 @@ export function AdminOrdersView() {
                             <CockpitRow 
                                 key={order.id} 
                                 order={order} 
-                                onClick={() => setSelectedOrder(order)} 
+                                onClick={() => setSelectedOrder(order)}
+                                onAction={(mode) => openActionModal(order.id, mode)}
                             />
                         ))}
                     </div>
@@ -145,11 +181,18 @@ export function AdminOrdersView() {
                 onClose={() => setSelectedOrder(null)} 
                 onStatusChange={handleStatusChange} 
             />
+
+            <OrderActionModal 
+                isOpen={actionModal.isOpen}
+                onClose={() => setActionModal({ ...actionModal, isOpen: false })}
+                mode={actionModal.mode}
+                onSubmit={handleActionSubmit}
+            />
         </div>
     )
 }
 
-function CockpitRow({ order, onClick }: { order: Order, onClick: () => void }) {
+function CockpitRow({ order, onClick, onAction }: { order: Order, onClick: () => void, onAction: (mode: 'problem' | 'cancel' | 'resume') => void }) {
     const timeElapsed = formatDistanceToNow(new Date(order.created_at), { locale: ptBR, addSuffix: false })
         .replace('cerca de ', '')
 
@@ -174,7 +217,13 @@ function CockpitRow({ order, onClick }: { order: Order, onClick: () => void }) {
     return (
         <div 
             onClick={onClick}
-            className="group relative p-4 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col md:flex-row md:items-center gap-3 md:gap-4 active:bg-gray-100"
+            className={`group relative p-4 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col md:flex-row md:items-center gap-3 md:gap-4 active:bg-gray-100 ${
+                order.status === 'canceled' 
+                    ? 'bg-red-50 hover:bg-red-100 border-red-500/30' 
+                    : order.status === 'delivered'
+                        ? 'bg-green-50 hover:bg-green-100 border-green-500/30'
+                        : ''
+            }`}
         >
             {/* Mobile Header: ID & Name */}
             <div className="flex justify-between items-start md:w-1/4">
@@ -200,16 +249,64 @@ function CockpitRow({ order, onClick }: { order: Order, onClick: () => void }) {
                  </div>
             </div>
 
-            {/* Price (Row 3 on Mobile, Right on Desktop) */}
-            <div className="flex items-center justify-between md:justify-end md:w-1/4">
-                <span className="font-bold text-gray-900 text-base md:text-sm">
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
-                </span>
-                
-                <button className="hidden md:block p-2 text-gray-300 group-hover:text-emerald-600 transition-colors">
-                    <ChevronRight size={20} />
-                </button>
-            </div>
+            {/* Problem Actions */}
+            {order.status === 'problem' && (
+                <div className="md:absolute md:right-4 md:top-1/2 md:-translate-y-1/2 flex items-center gap-2 mt-2 md:mt-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                        onClick={() => onAction('resume')}
+                        className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-md hover:bg-blue-200 transition-colors"
+                    >
+                        ↩️ Retomar
+                    </button>
+                    <button
+                        onClick={() => onAction('cancel')}
+                        className="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded-md hover:bg-red-200 transition-colors"
+                    >
+                        ❌ Cancelar
+                    </button>
+                </div>
+            )}
+
+            {/* Queue Actions - Problem Button */}
+            {['pending', 'preparing', 'sent'].includes(order.status) && (
+                 <div className="md:absolute md:right-4 md:top-1/2 md:-translate-y-1/2 hidden group-hover:flex items-center gap-2 mt-2 md:mt-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                        onClick={() => onAction('problem')}
+                        className="px-3 py-1.5 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-md hover:bg-yellow-200 transition-colors flex items-center gap-1"
+                    >
+                        <AlertCircle size={14} />
+                        Problema
+                    </button>
+                 </div>
+            )}
+
+            {/* Canceled Info */}
+            {(order.status === 'canceled') && (
+                <div className="md:absolute md:right-20 md:top-1/2 md:-translate-y-1/2 mt-1 md:mt-0">
+                     {order.cancel_reason ? (
+                        <span className="text-[10px] text-red-700 font-bold bg-white/50 px-2 py-1 rounded border border-red-200 max-w-[200px] truncate block">
+                            Motivo: {order.cancel_reason}
+                        </span>
+                     ) : (
+                        <span className="text-[10px] text-red-700 font-bold bg-white/50 px-2 py-1 rounded border border-red-200">
+                             Cancelado
+                        </span>
+                     )}
+                </div>
+            )}
+
+            {/* Price (Row 3 on Mobile, Right on Desktop) - Hide if problem to make space for buttons on mobile? No, keep it. */}
+            {order.status !== 'problem' && (
+                 <div className="flex items-center justify-between md:justify-end md:w-1/4">
+                    <span className={`font-bold text-base md:text-sm ${order.status === 'canceled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
+                    </span>
+                    
+                    <button className="hidden md:block p-2 text-gray-300 group-hover:text-emerald-600 transition-colors">
+                        <ChevronRight size={20} />
+                    </button>
+                </div>
+            )}
         </div>
     )
 }

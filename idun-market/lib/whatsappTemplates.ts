@@ -78,12 +78,13 @@ ${Icons.pin} Endereço: ${addressStreet}, ${addressNumber || ''}
 Fique de olho no interfone/celular!`;
 
         case 'canceled':
-            return `${Icons.warning} *Poxa, tivemos um imprevisto...*
+            return `${Icons.warning} *Olá, ${customerName}.*
 
-O pedido *#${shortId}* precisou ser cancelado/pausado.
-${Icons.chat} Motivo: ${reason || 'Motivo não informado'}
+Infelizmente, tivemos que cancelar seu pedido *#${shortId}*.
 
-Nossa equipe vai entrar em contato em instantes para resolver isso com você!`;
+💬 Motivo: ${reason || 'Não informado'}
+
+O estorno/devolução será processado em breve. Desculpe pelo transtorno!`;
         
         case 'problem':
              return `${Icons.warning} *Olá ${customerName}*
