@@ -19,26 +19,27 @@ interface OrderItem {
 
 export async function createOrder(orderData: OrderData, items: { id: string, name: string, quantity: number, price: number }[]) {
     try {
-        // 1. Criar o Pedido
-        const { data: order, error: orderError } = await supabase
+        // 1. Gerar ID Localmente (Blind Insert)
+        const orderId = crypto.randomUUID()
+        
+        // 2. Inserir Pedido (Sem retornar dados - .select() removido para evitar RLS)
+        const { error: orderError } = await supabase
             .from('orders')
             .insert({
+                id: orderId, // ID gerado pelo front
                 customer_name: orderData.customer_name,
                 customer_phone: orderData.customer_phone,
                 customer_address: orderData.customer_address,
                 payment_method: orderData.payment_method,
                 total_amount: orderData.total_amount,
-                store_id: orderData.store_id, // Passando o store_id se existir
+                store_id: orderData.store_id,
                 status: 'pending'
             })
-            .select()
-            .single()
+            // .select() REMOVED due to public role RLS (INSERT allowed, SELECT denied)
 
         if (orderError) throw orderError
-        if (!order) throw new Error('Falha ao criar pedido')
 
-        // 2. Preparar Itens do Pedido
-        const orderId = order.id
+        // 3. Preparar e Inserir Itens
         const orderItems = items.map(item => ({
             order_id: orderId,
             product_name: item.name,
@@ -47,14 +48,14 @@ export async function createOrder(orderData: OrderData, items: { id: string, nam
             total_price: item.price * item.quantity
         }))
 
-        // 3. Inserir Itens
         const { error: itemsError } = await supabase
             .from('order_items')
             .insert(orderItems)
+            // .select() REMOVED
 
         if (itemsError) throw itemsError
 
-        // 4. Buscar WhatsApp da Loja (Se tiver store_id)
+        // 4. Buscar WhatsApp da Loja (Se tiver store_id) - Leitura em tabela pública (stores)
         let whatsappNumber = null
         if (orderData.store_id) {
             const { data: store } = await supabase
