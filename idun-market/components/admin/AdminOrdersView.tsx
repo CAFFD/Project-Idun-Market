@@ -21,8 +21,9 @@ const TABS = [
 
 
 export function AdminOrdersView() {
-    const [orders, setOrders] = useState<Order[]>([])
-    const [loading, setLoading] = useState(true)
+    const [activeOrders, setActiveOrders] = useState<Order[]>([])
+    const [historyOrders, setHistoryOrders] = useState<Order[]>([])
+    const [loading, setLoading] = useState(true) // Initial full-page load
     const [activeTab, setActiveTab] = useState('queue')
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
     const [actionModal, setActionModal] = useState<{ isOpen: boolean, mode: 'problem' | 'cancel' | 'resume', orderId: string | null }>({
@@ -31,52 +32,96 @@ export function AdminOrdersView() {
         orderId: null
     })
 
+    // Polling for Active Orders (Silent)
     useEffect(() => {
-        loadOrders()
-        const interval = setInterval(loadOrders, 30000)
+        loadActiveOrders() // Initial load
+        const interval = setInterval(() => {
+            loadActiveOrders(true) // Silent poll
+        }, 30000)
         return () => clearInterval(interval)
     }, [])
 
-    const loadOrders = async () => {
+    // Load History when tab changes to history
+    useEffect(() => {
+        if (activeTab === 'history' && historyOrders.length === 0) {
+            loadHistoryOrders()
+        }
+    }, [activeTab])
+
+    const loadActiveOrders = async (silent = false) => {
+        if (!silent) setLoading(true)
         try {
-            const data = await getOrders() 
-            if (data) setOrders(data)
+            const data = await getOrders({ scope: 'active' })
+            if (data) setActiveOrders(data)
         } catch (error) {
-            console.error('Erro ao buscar pedidos:', error)
-            toast.error('Erro ao carregar pedidos')
+            console.error('Erro ao buscar pedidos ativos:', error)
+            if (!silent) toast.error('Erro ao carregar pedidos')
         } finally {
-            setLoading(false)
+            if (!silent) setLoading(false)
+        }
+    }
+
+    const loadHistoryOrders = async () => {
+        // History doesn't need global loading, maybe a local one or just update
+        try {
+            const data = await getOrders({ scope: 'history', limit: 50 })
+            if (data) setHistoryOrders(data)
+        } catch (error) {
+            console.error('Erro ao buscar histórico:', error)
+            toast.error('Erro ao carregar histórico')
         }
     }
 
     const handleStatusChange = async (orderId: string, newStatus: string, reason?: string) => {
-        const oldOrders = [...orders]
-        setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, cancel_reason: reason } : o))
+        // Optimistic Update for UI
+        const allOrders = [...activeOrders, ...historyOrders]
+        const order = allOrders.find(o => o.id === orderId)
+        
+        if (!order) return
+
+        // Update locally
+        const updatedOrder = { 
+            ...order, 
+            status: newStatus, 
+            cancel_reason: newStatus === 'canceled' ? reason : order.cancel_reason,
+            problem_reason: newStatus === 'problem' ? reason : (newStatus !== 'problem' ? undefined : order.problem_reason) // Hygiene in UI
+        }
+
+        // Move between lists based on status
+        if (['delivered', 'canceled'].includes(newStatus)) {
+             setActiveOrders(prev => prev.filter(o => o.id !== orderId))
+             setHistoryOrders(prev => [updatedOrder, ...prev].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
+        } else {
+             setHistoryOrders(prev => prev.filter(o => o.id !== orderId))
+             setActiveOrders(prev => {
+                const existing = prev.find(o => o.id === orderId)
+                if (existing) return prev.map(o => o.id === orderId ? updatedOrder : o)
+                return [...prev, updatedOrder].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+             })
+        }
 
         try {
             await updateOrderStatus(orderId, newStatus, reason)
             toast.success('Status atualizado!')
             
-            // Update local state with reason immediately for UI feedback
-            setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, cancel_reason: newStatus === 'canceled' ? reason : undefined, problem_reason: newStatus === 'problem' ? reason : undefined } : o))
+            // Re-fetch active to ensure consistency (optional, but good for sync)
+            loadActiveOrders(true) 
             
-            // Send WhatsApp ONLY for Canceled (Problem is silent/manual now)
-            if (reason && newStatus === 'canceled') {
-                const order = orders.find(o => o.id === orderId)
-                if (order && order.customer_phone) {
-                     const msg = getWhatsappMessage(newStatus as WhatsappMessageType, {
-                        customerName: order.customer_name,
-                        orderId: order.id,
-                        reason: reason
-                    })
-                    openWhatsapp(order.customer_phone, msg)
-                }
+            // Send WhatsApp ONLY for Canceled
+            if (reason && newStatus === 'canceled' && order.customer_phone) {
+                 const msg = getWhatsappMessage(newStatus as WhatsappMessageType, {
+                    customerName: order.customer_name,
+                    orderId: order.id,
+                    reason: reason
+                })
+                openWhatsapp(order.customer_phone, msg)
             }
 
         } catch (error) {
             console.error('Erro ao atualizar status:', error)
             toast.error('Erro ao atualizar status')
-            setOrders(oldOrders)
+            // Revert changes if needed (complex complexity, skipping for now as simple reload fixes it)
+            loadActiveOrders(true)
         }
     }
 
@@ -103,26 +148,22 @@ export function AdminOrdersView() {
     }
 
 
-    // Filter & Sort Logic
-    const filteredOrders = orders
-        .filter(o => {
-            if (activeTab === 'queue') return ['pending', 'preparing', 'sent'].includes(o.status)
-            if (activeTab === 'problems') return ['problem'].includes(o.status)
-            if (activeTab === 'history') return ['delivered', 'canceled'].includes(o.status)
-            return false
-        })
-        .sort((a, b) => {
-            const dateA = new Date(a.created_at).getTime()
-            const dateB = new Date(b.created_at).getTime()
-
-            // FIFO for Queue (Oldest first - "Don't let orders rot")
-            if (activeTab === 'queue') {
-                return dateA - dateB 
-            }
-            
-            // LIFO for History & Problems (Newest first - "See what just finished/happened")
-            return dateB - dateA 
-        })
+    // Filter & Sort Logic (Now simpler as we have pre-bucketed lists)
+    let filteredOrders: Order[] = []
+    
+    if (activeTab === 'queue') {
+        filteredOrders = activeOrders
+            .filter(o => ['pending', 'preparing', 'sent'].includes(o.status))
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) // FIFO
+    } else if (activeTab === 'problems') {
+        filteredOrders = activeOrders
+            .filter(o => o.status === 'problem')
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // LIFO (Newest problems first)
+    } else if (activeTab === 'history') {
+        filteredOrders = historyOrders
+            // Already sorted by getOrders but good to ensure
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    }
 
     if (loading) {
         return (
@@ -132,18 +173,19 @@ export function AdminOrdersView() {
         )
     }
 
+    // Counts for tabs
+    const queueCount = activeOrders.filter(o => ['pending', 'preparing', 'sent'].includes(o.status)).length
+    const problemCount = activeOrders.filter(o => o.status === 'problem').length
+
     return (
         <div className="space-y-6">
             {/* Tabs - Scrollable on mobile */}
             <div className="flex overflow-x-auto pb-2 md:pb-0 gap-2 md:gap-0 md:bg-gray-100/80 md:rounded-xl md:backdrop-blur-sm md:w-fit md:p-1 scrollbar-hide">
                 {TABS.map((tab) => {
                     const Icon = tab.icon
-                    const count = orders.filter(o => {
-                         if (tab.id === 'queue') return ['pending', 'preparing', 'sent'].includes(o.status)
-                         if (tab.id === 'problems') return ['problem'].includes(o.status)
-                         if (tab.id === 'history') return false
-                         return false
-                    }).length
+                    let count = 0
+                    if (tab.id === 'queue') count = queueCount
+                    if (tab.id === 'problems') count = problemCount
 
                     return (
                         <button

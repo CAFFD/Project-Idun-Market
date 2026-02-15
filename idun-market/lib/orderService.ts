@@ -74,7 +74,7 @@ export async function createOrder(orderData: OrderData, items: { id: string, nam
     }
 }
 
-export async function getOrders(storeId?: string) {
+export async function getOrders(options: { scope: 'active' | 'history', limit?: number } = { scope: 'active' }) {
     let query = supabase
         .from('orders')
         .select(`
@@ -89,12 +89,16 @@ export async function getOrders(storeId?: string) {
         `)
         .order('created_at', { ascending: false })
 
-    // Se tiver store_id, filtra por ele (Futuro: para multi-tenancy real)
-    // Por enquanto, como o Supabase é client-side e RLS pode filtrar pelo user, 
-    // ou se o dev quiser filtrar explicitamente:
-    // if (storeId) {
-    //     query = query.eq('store_id', storeId)
-    // }
+    if (options.scope === 'active') {
+        // Pending, Preparing, Sent, Problem
+        query = query.in('status', ['pending', 'preparing', 'sent', 'problem'])
+    } else if (options.scope === 'history') {
+        // Delivered, Canceled
+        query = query.in('status', ['delivered', 'canceled'])
+        if (options.limit) {
+            query = query.limit(options.limit)
+        }
+    }
 
     const { data, error } = await query
     if (error) throw error
@@ -103,12 +107,16 @@ export async function getOrders(storeId?: string) {
 
 export async function updateOrderStatus(orderId: string, status: string, reason?: string) {
     const updateData: any = { status }
-    if (reason) {
-        if (status === 'problem') {
-            updateData.problem_reason = reason
-        } else if (status === 'canceled') {
-            updateData.cancel_reason = reason
-        }
+    
+    // Hygiene: Clear problem_reason if we are resolving the problem (status is NOT problem)
+    if (status !== 'problem') {
+        updateData.problem_reason = null
+    } else if (status === 'problem' && reason) {
+        updateData.problem_reason = reason
+    }
+
+    if (status === 'canceled' && reason) {
+        updateData.cancel_reason = reason
     }
 
     const { error } = await supabase
