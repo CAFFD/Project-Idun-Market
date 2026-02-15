@@ -212,8 +212,15 @@ export default function CheckoutPage() {
 
             router.push('/')
 
-        } catch (err) {
-            console.error(err)
+        } catch (err: any) {
+            console.error('🚨 ERRO CRÍTICO NO CHECKOUT:', err)
+            
+            // Log deep details for Vercel Logs
+            if (err.message) console.error('Erro Message:', err.message)
+            if (err.details) console.error('Erro Details:', err.details)
+            if (err.hint) console.error('Erro Hint:', err.hint)
+            if (err.code) console.error('Erro Code (Postgres):', err.code)
+
             toast.error('Erro ao processar pedido. Tente novamente.')
         } finally {
             setLoading(false)
