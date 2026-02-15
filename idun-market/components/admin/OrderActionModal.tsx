@@ -43,17 +43,17 @@ export function OrderActionModal({ isOpen, onClose, mode, onSubmit }: OrderActio
                     {mode === 'resume' ? (
                         <div className="grid grid-cols-2 gap-4">
                             <button 
-                                className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all group"
+                                className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-blue-200 bg-blue-50 text-blue-700 hover:border-blue-300 hover:bg-blue-100 transition-all group"
                                 onClick={() => onSubmit('preparing')}
                             >
-                                <PackageCheck size={32} className="text-gray-400 group-hover:text-blue-600 mb-1" />
+                                <PackageCheck size={32} className="text-blue-500 group-hover:text-blue-700 mb-1" />
                                 <span className="font-bold text-sm">Voltar para Preparação 🍳</span>
                             </button>
                             <button 
-                                className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all group"
+                                className="h-24 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100 transition-all group"
                                 onClick={() => onSubmit('sent')}
                             >
-                                <Truck size={32} className="text-gray-400 group-hover:text-indigo-600 mb-1" />
+                                <Truck size={32} className="text-indigo-500 group-hover:text-indigo-700 mb-1" />
                                 <span className="font-bold text-sm">Voltar para Entrega 🛵</span>
                             </button>
                         </div>
