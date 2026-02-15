@@ -57,12 +57,12 @@ export function AdminOrdersView() {
             await updateOrderStatus(orderId, newStatus, reason)
             toast.success('Status atualizado!')
             
-            // Send WhatsApp for Canceled OR Problem
-            if (reason && (newStatus === 'canceled' || newStatus === 'problem')) {
+            // Update local state with reason immediately for UI feedback
+            setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, cancel_reason: newStatus === 'canceled' ? reason : undefined, problem_reason: newStatus === 'problem' ? reason : undefined } : o))
+            
+            // Send WhatsApp ONLY for Canceled (Problem is silent/manual now)
+            if (reason && newStatus === 'canceled') {
                 const order = orders.find(o => o.id === orderId)
-                // Update local state with reason immediately for UI feedback
-                setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, cancel_reason: newStatus === 'canceled' ? reason : undefined, problem_reason: newStatus === 'problem' ? reason : undefined } : o))
-                
                 if (order && order.customer_phone) {
                      const msg = getWhatsappMessage(newStatus as WhatsappMessageType, {
                         customerName: order.customer_name,

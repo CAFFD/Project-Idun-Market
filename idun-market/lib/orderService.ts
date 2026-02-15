@@ -104,7 +104,11 @@ export async function getOrders(storeId?: string) {
 export async function updateOrderStatus(orderId: string, status: string, reason?: string) {
     const updateData: any = { status }
     if (reason) {
-        updateData.cancel_reason = reason
+        if (status === 'problem') {
+            updateData.problem_reason = reason
+        } else if (status === 'canceled') {
+            updateData.cancel_reason = reason
+        }
     }
 
     const { error } = await supabase

@@ -96,12 +96,12 @@ Houve uma dúvida ou imprevisto com o pedido *#${shortId}*.
 Poderia nos responder por aqui?`;
 
         case 'negotiate':
-             return `${Icons.warning} *Olá ${customerName}*
+             return `⚠️ *${customerName}*
 
 Tivemos um pequeno imprevisto com o pedido *#${shortId}*:
 ⚠️ *${reason}*
 
-${Icons.handshake} Podemos substituir por outro item ou ver outra solução? Aguardo seu retorno!`;
+🤝 Podemos resolver por aqui? Aguardo seu retorno!`;
 
         case 'delivered':
              return `${Icons.star} *Pedido Entregue!*

@@ -91,10 +91,10 @@ export function OrderActionModal({ isOpen, onClose, mode, onSubmit }: OrderActio
                                     {mode === 'problem' ? 'Detalhes do Problema' : 'Motivo (Obrigatório)'}
                                 </label>
                                 <textarea 
-                                    placeholder={mode === 'problem' ? "Descreva..." : "Ex: Falta de ingrediente, Fora da área de entrega..."}
+                                    placeholder={mode === 'problem' ? "Descreva o problema..." : "Ex: Falta de ingrediente, Fora da área de entrega..."}
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
-                                    className="w-full min-h-[100px] p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm resize-none"
+                                    className="w-full min-h-[100px] p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm resize-none placeholder-gray-500 text-gray-900"
                                 />
                             </div>
                         </div>
