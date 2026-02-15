@@ -60,6 +60,9 @@ export function AdminOrdersView() {
             // Send WhatsApp for Canceled OR Problem
             if (reason && (newStatus === 'canceled' || newStatus === 'problem')) {
                 const order = orders.find(o => o.id === orderId)
+                // Update local state with reason immediately for UI feedback
+                setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, cancel_reason: newStatus === 'canceled' ? reason : undefined, problem_reason: newStatus === 'problem' ? reason : undefined } : o))
+                
                 if (order && order.customer_phone) {
                      const msg = getWhatsappMessage(newStatus as WhatsappMessageType, {
                         customerName: order.customer_name,
@@ -79,6 +82,17 @@ export function AdminOrdersView() {
 
     const openActionModal = (orderId: string, mode: 'problem' | 'cancel' | 'resume') => {
         setActionModal({ isOpen: true, mode, orderId })
+    }
+
+    const handleNegotiate = (order: Order) => {
+        if (!order.customer_phone) return toast.error('Cliente sem telefone cadastrado')
+        
+        const msg = getWhatsappMessage('negotiate', {
+            customerName: order.customer_name,
+            orderId: order.id,
+            reason: order.problem_reason || 'Imprevisto no pedido'
+        })
+        openWhatsapp(order.customer_phone, msg)
     }
 
     const handleActionSubmit = (status: string, reason?: string) => {
@@ -169,7 +183,10 @@ export function AdminOrdersView() {
                                 key={order.id} 
                                 order={order} 
                                 onClick={() => setSelectedOrder(order)}
-                                onAction={(mode) => openActionModal(order.id, mode)}
+                                onAction={(mode) => {
+                                    if (mode === 'negotiate') handleNegotiate(order)
+                                    else openActionModal(order.id, mode)
+                                }}
                             />
                         ))}
                     </div>
@@ -192,7 +209,7 @@ export function AdminOrdersView() {
     )
 }
 
-function CockpitRow({ order, onClick, onAction }: { order: Order, onClick: () => void, onAction: (mode: 'problem' | 'cancel' | 'resume') => void }) {
+function CockpitRow({ order, onClick, onAction }: { order: Order, onClick: () => void, onAction: (mode: 'problem' | 'cancel' | 'resume' | 'negotiate') => void }) {
     const timeElapsed = formatDistanceToNow(new Date(order.created_at), { locale: ptBR, addSuffix: false })
         .replace('cerca de ', '')
 
@@ -210,17 +227,19 @@ function CockpitRow({ order, onClick, onAction }: { order: Order, onClick: () =>
         'preparing': 'Preparando',
         'sent': 'Enviado',
         'delivered': 'Entregue',
-        'problem': 'Problema',
+        'problem': 'PROBLEMA',
         'canceled': 'Cancelado',
     }
+
+    const isProblem = order.status === 'problem'
 
     return (
         <div 
             onClick={onClick}
-            className={`group relative p-4 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col gap-3 border-l-4 ${
-                order.status === 'problem' ? 'border-l-red-400' : 
-                order.status === 'canceled' ? 'border-l-gray-300' :
-                order.status === 'delivered' ? 'border-l-emerald-500' : 'border-l-transparent'
+            className={`group relative p-4 transition-all cursor-pointer flex flex-col gap-3 border-l-4 ${
+                isProblem ? 'border-l-amber-500 bg-amber-50 mx-2 my-2 rounded-lg shadow-sm border border-amber-200' :
+                order.status === 'canceled' ? 'border-l-gray-300 hover:bg-gray-50' :
+                order.status === 'delivered' ? 'border-l-emerald-500 hover:bg-gray-50' : 'border-l-transparent hover:bg-gray-50'
             } ${
                 order.status === 'canceled' 
                     ? 'bg-red-50/50 hover:bg-red-50 border-y border-red-100' 
@@ -240,7 +259,11 @@ function CockpitRow({ order, onClick, onAction }: { order: Order, onClick: () =>
 
                 {/* Status & Time */}
                 <div className="flex items-center gap-2 md:justify-center md:flex-1">
-                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-semibold whitespace-nowrap ${statusColors[order.status] || 'bg-gray-100 text-gray-700'}`}>
+                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-bold uppercase tracking-wider whitespace-nowrap ${
+                         isProblem ? 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse' :
+                         statusColors[order.status] || 'bg-gray-100 text-gray-700'
+                     }`}>
+                        {isProblem && <AlertCircle size={14} />}
                         {statusLabels[order.status] || order.status}
                      </div>
                      
@@ -266,20 +289,39 @@ function CockpitRow({ order, onClick, onAction }: { order: Order, onClick: () =>
             <div className="flex flex-col gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
                 
                 {/* PROBLEM TAB: Resume/Cancel Actions */}
-                {order.status === 'problem' && (
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-                        <button
-                            onClick={() => onAction('resume')}
-                            className="px-4 py-2 bg-blue-100 text-blue-700 text-xs font-bold rounded-md hover:bg-blue-200 transition-colors flex items-center gap-2"
-                        >
-                            ↩️ Retomar Pedido
-                        </button>
-                        <button
-                            onClick={() => onAction('cancel')}
-                            className="px-4 py-2 bg-red-100 text-red-700 text-xs font-bold rounded-md hover:bg-red-200 transition-colors flex items-center gap-2"
-                        >
-                            ❌ Cancelar
-                        </button>
+                {isProblem && (
+                    <div className="flex flex-col gap-3 pt-2 border-t border-amber-200/50">
+                        {/* THE REASON - WAR ROOM STYLE */}
+                        <div className="flex items-start gap-2 text-amber-900 bg-amber-100/50 p-3 rounded-md border border-amber-200">
+                             <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                             <div className="flex flex-col">
+                                 <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">Motivo do Problema</span>
+                                 <span className="font-bold text-sm">{order.problem_reason || 'Não especificado'}</span>
+                             </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2">
+                            <button
+                                onClick={() => onAction('negotiate')}
+                                className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-md hover:bg-emerald-700 shadow-sm transition-all flex items-center gap-2 animate-in fade-in slide-in-from-right-4"
+                            >
+                                <User size={14} />
+                                Negociar Solução
+                            </button>
+                            <div className="h-6 w-px bg-amber-200 mx-1"></div>
+                            <button
+                                onClick={() => onAction('resume')}
+                                className="px-3 py-2 bg-white text-blue-600 text-xs font-bold rounded-md border border-blue-200 hover:bg-blue-50 transition-colors flex items-center gap-2"
+                            >
+                                ↩️ Retomar
+                            </button>
+                            <button
+                                onClick={() => onAction('cancel')}
+                                className="px-3 py-2 bg-white text-red-600 text-xs font-bold rounded-md border border-red-200 hover:bg-red-50 transition-colors flex items-center gap-2"
+                            >
+                                ❌ Cancelar
+                            </button>
+                        </div>
                     </div>
                 )}
 

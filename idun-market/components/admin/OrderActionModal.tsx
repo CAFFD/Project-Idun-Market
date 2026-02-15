@@ -63,16 +63,35 @@ export function OrderActionModal({ isOpen, onClose, mode, onSubmit }: OrderActio
                                 <AlertCircle className="shrink-0" size={20} />
                                 <p>
                                     {mode === 'problem' 
-                                        ? 'Descreva o problema para registrar no sistema.'
+                                        ? 'Selecione o motivo ou descreva o problema:'
                                         : 'ATENÇÃO: Isso cancelará o pedido definitivamente e enviará uma mensagem no WhatsApp do cliente com o motivo.'}
                                 </p>
                             </div>
+
+                            {mode === 'problem' && (
+                                <div className="flex flex-wrap gap-2">
+                                    {["Cliente não atende", "Endereço não encontrado", "Falta de Ingrediente", "Motoboy caiu"].map((r) => (
+                                        <button
+                                            key={r}
+                                            onClick={() => setReason(r)}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
+                                                reason === r
+                                                    ? 'bg-yellow-100 text-yellow-800 border-yellow-300 ring-1 ring-yellow-300'
+                                                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            {r}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-700 block">
-                                    Motivo {mode === 'cancel' && '(Obrigatório)'}
+                                    {mode === 'problem' ? 'Detalhes do Problema' : 'Motivo (Obrigatório)'}
                                 </label>
                                 <textarea 
-                                    placeholder={mode === 'problem' ? "Ex: Cliente não atende, Endereço não encontrado..." : "Ex: Falta de ingrediente, Fora da área de entrega..."}
+                                    placeholder={mode === 'problem' ? "Descreva..." : "Ex: Falta de ingrediente, Fora da área de entrega..."}
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
                                     className="w-full min-h-[100px] p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm resize-none"

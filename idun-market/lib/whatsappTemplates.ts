@@ -1,4 +1,4 @@
-export type WhatsappMessageType = 'created' | 'preparing' | 'sent' | 'canceled' | 'problem' | 'delivered';
+export type WhatsappMessageType = 'created' | 'preparing' | 'sent' | 'canceled' | 'problem' | 'delivered' | 'negotiate';
 
 export interface WhatsappMessageData {
     customerName: string;
@@ -45,6 +45,9 @@ const Icons = {
 
   // 💬 Chat
   chat: String.fromCodePoint(0x1F4AC),
+
+  // 🤝 Aperto de mão (Negociação)
+  handshake: String.fromCodePoint(0x1F91D),
 };
 
 export const getWhatsappMessage = (type: WhatsappMessageType, data: WhatsappMessageData): string => {
@@ -91,6 +94,14 @@ O estorno/devolução será processado em breve. Desculpe pelo transtorno!`;
              
 Houve uma dúvida ou imprevisto com o pedido *#${shortId}*.
 Poderia nos responder por aqui?`;
+
+        case 'negotiate':
+             return `${Icons.warning} *Olá ${customerName}*
+
+Tivemos um pequeno imprevisto com o pedido *#${shortId}*:
+⚠️ *${reason}*
+
+${Icons.handshake} Podemos substituir por outro item ou ver outra solução? Aguardo seu retorno!`;
 
         case 'delivered':
              return `${Icons.star} *Pedido Entregue!*
