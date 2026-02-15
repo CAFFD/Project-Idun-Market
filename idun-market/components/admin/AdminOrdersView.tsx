@@ -217,96 +217,93 @@ function CockpitRow({ order, onClick, onAction }: { order: Order, onClick: () =>
     return (
         <div 
             onClick={onClick}
-            className={`group relative p-4 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col md:flex-row md:items-center gap-3 md:gap-4 active:bg-gray-100 ${
+            className={`group relative p-4 hover:bg-gray-50 transition-colors cursor-pointer flex flex-col gap-3 border-l-4 ${
+                order.status === 'problem' ? 'border-l-red-400' : 
+                order.status === 'canceled' ? 'border-l-gray-300' :
+                order.status === 'delivered' ? 'border-l-emerald-500' : 'border-l-transparent'
+            } ${
                 order.status === 'canceled' 
-                    ? 'bg-red-50 hover:bg-red-100 border-red-500/30' 
+                    ? 'bg-red-50/50 hover:bg-red-50 border-y border-red-100' 
                     : order.status === 'delivered'
-                        ? 'bg-green-50 hover:bg-green-100 border-green-500/30'
+                        ? 'bg-green-50/30 hover:bg-green-50 border-y border-green-100'
                         : ''
             }`}
         >
-            {/* Mobile Header: ID & Name */}
-            <div className="flex justify-between items-start md:w-1/4">
-                <div className="flex flex-col">
-                    <span className="text-xs font-mono font-bold text-gray-400">#{order.id.slice(0, 4)}</span>
+            {/* HEADER: Main Info */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                
+                {/* ID & Name */}
+                <div className="flex items-center gap-3 md:w-1/3">
+                    <span className="text-xs font-mono font-bold text-gray-400 shrink-0">#{order.id.slice(0, 4)}</span>
                     <h3 className="font-semibold text-gray-900 line-clamp-1">{order.customer_name}</h3>
                 </div>
-                {/* Mobile Chevron (visible only on mobile) */}
-                <span className="md:hidden text-gray-300">
-                    <ChevronRight size={18} />
-                </span>
-            </div>
 
-            {/* Status & Time (Row 2 on Mobile, Center on Desktop) */}
-            <div className="flex items-center gap-2 md:justify-center md:flex-1">
-                 <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-semibold whitespace-nowrap ${statusColors[order.status] || 'bg-gray-100 text-gray-700'}`}>
-                    {statusLabels[order.status] || order.status}
-                 </div>
-                 
-                 <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md whitespace-nowrap">
-                    <Clock size={12} />
-                    {timeElapsed}
-                 </div>
-            </div>
-
-            {/* Problem Actions */}
-            {order.status === 'problem' && (
-                <div className="md:absolute md:right-4 md:top-1/2 md:-translate-y-1/2 flex items-center gap-2 mt-2 md:mt-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                        onClick={() => onAction('resume')}
-                        className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-md hover:bg-blue-200 transition-colors"
-                    >
-                        ↩️ Retomar
-                    </button>
-                    <button
-                        onClick={() => onAction('cancel')}
-                        className="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded-md hover:bg-red-200 transition-colors"
-                    >
-                        ❌ Cancelar
-                    </button>
+                {/* Status & Time */}
+                <div className="flex items-center gap-2 md:justify-center md:flex-1">
+                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-semibold whitespace-nowrap ${statusColors[order.status] || 'bg-gray-100 text-gray-700'}`}>
+                        {statusLabels[order.status] || order.status}
+                     </div>
+                     
+                     <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-md whitespace-nowrap">
+                        <Clock size={12} />
+                        {timeElapsed}
+                     </div>
                 </div>
-            )}
 
-            {/* Queue Actions - Problem Button */}
-            {['pending', 'preparing', 'sent'].includes(order.status) && (
-                 <div className="md:absolute md:right-4 md:top-1/2 md:-translate-y-1/2 hidden group-hover:flex items-center gap-2 mt-2 md:mt-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                        onClick={() => onAction('problem')}
-                        className="px-3 py-1.5 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-md hover:bg-yellow-200 transition-colors flex items-center gap-1"
-                    >
-                        <AlertCircle size={14} />
-                        Problema
-                    </button>
-                 </div>
-            )}
-
-            {/* Canceled Info */}
-            {(order.status === 'canceled') && (
-                <div className="md:absolute md:right-20 md:top-1/2 md:-translate-y-1/2 mt-1 md:mt-0">
-                     {order.cancel_reason ? (
-                        <span className="text-[10px] text-red-700 font-bold bg-white/50 px-2 py-1 rounded border border-red-200 max-w-[200px] truncate block">
-                            Motivo: {order.cancel_reason}
-                        </span>
-                     ) : (
-                        <span className="text-[10px] text-red-700 font-bold bg-white/50 px-2 py-1 rounded border border-red-200">
-                             Cancelado
-                        </span>
-                     )}
-                </div>
-            )}
-
-            {/* Price (Row 3 on Mobile, Right on Desktop) - Hide if problem to make space for buttons on mobile? No, keep it. */}
-            {order.status !== 'problem' && (
-                 <div className="flex items-center justify-between md:justify-end md:w-1/4">
+                {/* Price & Chevron */}
+                <div className="flex items-center justify-between md:justify-end md:w-1/4 gap-4">
                     <span className={`font-bold text-base md:text-sm ${order.status === 'canceled' ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total_amount)}
                     </span>
                     
-                    <button className="hidden md:block p-2 text-gray-300 group-hover:text-emerald-600 transition-colors">
+                    <span className="text-gray-300 group-hover:text-emerald-600 transition-colors">
                         <ChevronRight size={20} />
-                    </button>
+                    </span>
                 </div>
-            )}
+            </div>
+
+            {/* FOOTER: Actions & Messages */}
+            <div className="flex flex-col gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+                
+                {/* PROBLEM TAB: Resume/Cancel Actions */}
+                {order.status === 'problem' && (
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                        <button
+                            onClick={() => onAction('resume')}
+                            className="px-4 py-2 bg-blue-100 text-blue-700 text-xs font-bold rounded-md hover:bg-blue-200 transition-colors flex items-center gap-2"
+                        >
+                            ↩️ Retomar Pedido
+                        </button>
+                        <button
+                            onClick={() => onAction('cancel')}
+                            className="px-4 py-2 bg-red-100 text-red-700 text-xs font-bold rounded-md hover:bg-red-200 transition-colors flex items-center gap-2"
+                        >
+                            ❌ Cancelar
+                        </button>
+                    </div>
+                )}
+
+                {/* QUEUE TAB: Report Problem Button */}
+                {['pending', 'preparing', 'sent'].includes(order.status) && (
+                     <div className="flex justify-end pt-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <button
+                            onClick={() => onAction('problem')}
+                            className="px-3 py-1.5 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-md hover:bg-yellow-200 transition-colors flex items-center gap-1"
+                        >
+                            <AlertCircle size={14} />
+                            Reportar Problema
+                        </button>
+                     </div>
+                )}
+
+                {/* HISTORY TAB: Cancellation Reason */}
+                {order.status === 'canceled' && order.cancel_reason && (
+                    <div className="mt-2 bg-red-100/50 p-2.5 rounded-md border border-red-100 text-xs flex gap-2 items-start text-red-800">
+                         <span className="font-bold shrink-0">Motivo:</span>
+                         <span>{order.cancel_reason}</span>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
